@@ -1,0 +1,5 @@
+Test Case ID,Description,Status,Platform,Error Details
+"TC-01","Mobile App Launch","Pass","Android",""
+"TC-02","Mobile Invalid Login","Pass","Android",""
+"TC-03","Mobile Valid Login","Pass","Android",""
+"TC-04","Mobile Navigation Flow","Pass","Android",""

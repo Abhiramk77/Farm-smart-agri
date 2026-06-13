@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "admin": "mock_token_u1",
+  "farmer": "mock_token_u2",
+  "buyer": "mock_token_u3",
+  "adminEmail": "admin@farming.com",
+  "farmerEmail": "farmer@farming.com",
+  "buyerEmail": "buyer@farming.com"
+}
+

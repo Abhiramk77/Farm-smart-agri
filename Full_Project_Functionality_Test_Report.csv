@@ -1,0 +1,19 @@
+Test Case ID,Platform,Module,Functionality Tested,Testing Process / Steps,Expected Outcome,Actual Result,Status
+TC-001,Web,Authentication,User Registration,1. Navigate to Signup page. 2. Enter Role (Farmer). 3. Fill in details. 4. Submit.,Account is created and redirects to Dashboard.,Redirected successfully,Pass
+TC-002,Web,Authentication,Admin Login,1. Navigate to Login. 2. Toggle 'Admin Login'. 3. Enter admin credentials. 4. Submit.,Access granted to Admin Dashboard.,Admin dashboard loaded,Pass
+TC-003,Web,Farmer,Create Product Listing,1. Go to 'Sell Product'. 2. Fill crop details. 3. Upload image URL. 4. Click Submit.,Listing is posted and visible in Marketplace.,Listing appeared in Marketplace,Pass
+TC-004,Mobile,Authentication,User Login,1. Open Flutter app. 2. Select 'Login'. 3. Enter credentials.,User logs in and navigates to correct Shell.,Logged in successfully,Pass
+TC-005,Mobile,Buyer,View Marketplace,1. Open Buyer Dashboard. 2. Navigate to Marketplace tab.,List of available crops from farmers is displayed.,Crops displayed with images,Pass
+TC-006,Web,Buyer,Create Contract,1. Go to 'Post Requirement'. 2. Enter crop details & price. 3. Submit.,Contract is created and sent to farmers.,Contract broadcasted,Pass
+TC-007,Mobile,Farmer,Accept Contract,1. Open pending contract in mobile app. 2. Click 'Accept Contract'.,Contract status changes to Active.,Status updated to Active,Pass
+TC-008,Web,Farmer,Reject Contract,1. Open pending contract. 2. Click 'Reject Contract'.,Contract is terminated.,Status updated to Rejected,Pass
+TC-009,Mobile,Farmer,Update Progress,1. Open active contract. 2. Click 'Mark as Growing'.,Progress indicator moves to next stage.,Stage updated correctly,Pass
+TC-010,Web,Farmer,Price Negotiation,1. Open pending contract. 2. Enter counter price. 3. Click 'Negotiate Price'.,Message sent to buyer with new price offer.,Negotiation started,Pass
+TC-011,Mobile,Farmer,Mark as Delivered,1. Open active contract. 2. Click 'Mark as Delivered'.,Contract finishes and Receipt Dialog opens.,Receipt modal triggered,Pass
+TC-012,Web,Buyer,View Active Orders,1. Go to Buyer Dashboard. 2. View Active Orders section.,Shows all contracts accepted by farmers.,Contracts rendered correctly,Pass
+TC-013,Web,Admin,Suspend User,1. Go to Admin Dashboard. 2. Click 'Suspend' on a user row.,User status changes to Suspended.,User suspended,Pass
+TC-014,Web,Chat,Real-time Messaging,1. Open Chat page. 2. Select thread. 3. Type message. 4. Click Send.,Message appears in chat bubble instantly.,Message sent and received,Pass
+TC-015,Web,Payment,View Transactions,1. Open Payment Status page. 2. View table of past transactions.,Shows table of payments with statuses.,Payments loaded properly,Pass
+TC-016,Web,Payment,Download Receipt,1. Click download icon on a Completed transaction.,E-Receipt modal opens showing calculated taxes.,Receipt modal with 5% state tax shown,Pass
+TC-017,Mobile,Payment,View E-Receipt,1. Mark order as Delivered. 2. View pop-up receipt.,Receipt dialog shows matching web tax logic.,Dialog presented correctly,Pass
+TC-018,Web,Payment,Print PDF Receipt,1. Open E-Receipt. 2. Click 'Print / Save PDF'.,Browser print dialogue opens for saving.,Print dialogue opened,Pass

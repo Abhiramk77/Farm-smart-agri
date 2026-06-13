@@ -1,0 +1,87 @@
+{
+  "discovered_endpoints": [
+    {
+      "path": "/api/auth/signup",
+      "method": "POST",
+      "access_level": "public",
+      "description": "Register a new user",
+      "required_fields": ["name", "email", "role"],
+      "optional_fields": ["mobile", "state", "city", "category"]
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "access_level": "public",
+      "description": "Login existing user or get mock token",
+      "required_fields": ["email"],
+      "optional_fields": ["role", "category"]
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "access_level": "requires-auth",
+      "description": "Get current authenticated user profile",
+      "auth_header": "Authorization: Bearer <token>"
+    },
+    {
+      "path": "/api/contracts",
+      "method": "GET",
+      "access_level": "public",
+      "description": "List all contracts with optional status filter",
+      "query_params": ["status"]
+    },
+    {
+      "path": "/api/contracts/marketplace",
+      "method": "GET",
+      "access_level": "public",
+      "description": "List pending contracts from marketplace",
+      "note": "Returns only contracts with status='pending'"
+    },
+    {
+      "path": "/api/contracts/:id",
+      "method": "GET",
+      "access_level": "public",
+      "description": "Get a specific contract by ID"
+    },
+    {
+      "path": "/api/contracts",
+      "method": "POST",
+      "access_level": "public",
+      "description": "Create a new contract",
+      "note": "No auth required in current implementation - SECURITY ISSUE"
+    },
+    {
+      "path": "/api/contracts/:id/accept",
+      "method": "POST",
+      "access_level": "public",
+      "description": "Accept a pending contract",
+      "note": "No auth required - SECURITY ISSUE"
+    },
+    {
+      "path": "/api/contracts/:id/reject",
+      "method": "POST",
+      "access_level": "public",
+      "description": "Reject a pending contract",
+      "note": "No auth required - SECURITY ISSUE"
+    },
+    {
+      "path": "/api/contracts/:id/progress",
+      "method": "PUT",
+      "access_level": "public",
+      "description": "Update contract progress",
+      "note": "No auth required - SECURITY ISSUE"
+    },
+    {
+      "path": "/api/chats",
+      "method": "GET",
+      "access_level": "public",
+      "description": "List all chats",
+      "note": "No auth required - likely should be authenticated"
+    }
+  ],
+  "total_endpoints": 11,
+  "public_endpoints": 9,
+  "auth_required_endpoints": 2,
+  "summary": "Most contract manipulation endpoints lack authentication"
+}
+

@@ -1,0 +1,310 @@
+﻿{
+    "summary":  {
+                    "critical":  4,
+                    "medium":  4,
+                    "totalTests":  26,
+                    "high":  3
+                },
+    "baseUrl":  "http://localhost:3000",
+    "timestamp":  "2026-06-13T10:10:51.1209550+05:30",
+    "tests":  [
+                  {
+                      "note":  "Missing auth header",
+                      "method":  "GET",
+                      "expected":  401,
+                      "role":  "NONE",
+                      "timestamp":  "2026-06-13T10:10:38.3038267+05:30",
+                      "finding":  false,
+                      "test_category":  "AuthN Bypass",
+                      "severity":  "HIGH",
+                      "status":  401,
+                      "endpoint":  "/api/auth/me"
+                  },
+                  {
+                      "note":  "Invalid token",
+                      "method":  "GET",
+                      "expected":  401,
+                      "role":  "NONE",
+                      "timestamp":  "2026-06-13T10:10:38.5721935+05:30",
+                      "finding":  false,
+                      "test_category":  "AuthN Bypass",
+                      "severity":  "HIGH",
+                      "status":  401,
+                      "endpoint":  "/api/auth/me"
+                  },
+                  {
+                      "note":  "POST contract without auth (got 400, need 401)",
+                      "method":  "POST",
+                      "expected":  401,
+                      "role":  "NONE",
+                      "timestamp":  "2026-06-13T10:10:38.8016888+05:30",
+                      "finding":  false,
+                      "test_category":  "AuthN Bypass",
+                      "severity":  "CRITICAL",
+                      "status":  400,
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "note":  "Accept contract (no auth, got 200)",
+                      "method":  "POST",
+                      "expected":  401,
+                      "role":  "NONE",
+                      "timestamp":  "2026-06-13T10:10:39.0473163+05:30",
+                      "finding":  true,
+                      "test_category":  "AuthN Bypass",
+                      "severity":  "CRITICAL",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/:id/accept"
+                  },
+                  {
+                      "note":  "Admin can modify",
+                      "method":  "PUT",
+                      "severity":  "MEDIUM",
+                      "role":  "Admin",
+                      "timestamp":  "2026-06-13T10:10:39.2951110+05:30",
+                      "allowed":  false,
+                      "test_category":  "AuthZ",
+                      "status":  400,
+                      "endpoint":  "/api/contracts/:id/progress"
+                  },
+                  {
+                      "note":  "Farmer can modify",
+                      "method":  "PUT",
+                      "severity":  "MEDIUM",
+                      "role":  "Farmer",
+                      "timestamp":  "2026-06-13T10:10:39.5398215+05:30",
+                      "allowed":  false,
+                      "test_category":  "AuthZ",
+                      "status":  400,
+                      "endpoint":  "/api/contracts/:id/progress"
+                  },
+                  {
+                      "note":  "Buyer can modify",
+                      "method":  "PUT",
+                      "severity":  "MEDIUM",
+                      "role":  "Buyer",
+                      "timestamp":  "2026-06-13T10:10:39.8052179+05:30",
+                      "allowed":  false,
+                      "test_category":  "AuthZ",
+                      "status":  400,
+                      "endpoint":  "/api/contracts/:id/progress"
+                  },
+                  {
+                      "note":  "Read c1",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "contractId":  "c1",
+                      "timestamp":  "2026-06-13T10:10:40.0517071+05:30",
+                      "allowed":  true,
+                      "test_category":  "IDOR",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/:id"
+                  },
+                  {
+                      "note":  "Read c2",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "contractId":  "c2",
+                      "timestamp":  "2026-06-13T10:10:40.3019174+05:30",
+                      "allowed":  true,
+                      "test_category":  "IDOR",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/:id"
+                  },
+                  {
+                      "note":  "Read c3",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "contractId":  "c3",
+                      "timestamp":  "2026-06-13T10:10:40.5366698+05:30",
+                      "allowed":  true,
+                      "test_category":  "IDOR",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/:id"
+                  },
+                  {
+                      "note":  "Tampered token",
+                      "method":  "GET",
+                      "expected":  401,
+                      "tampered_token":  "mock_token_u999",
+                      "finding":  false,
+                      "test_category":  "Token Tampering",
+                      "severity":  "CRITICAL",
+                      "status":  404,
+                      "endpoint":  "/api/auth/me",
+                      "timestamp":  "2026-06-13T10:10:40.7745278+05:30"
+                  },
+                  {
+                      "note":  "Tampered token",
+                      "method":  "GET",
+                      "expected":  401,
+                      "tampered_token":  "invalid_jwt",
+                      "finding":  false,
+                      "test_category":  "Token Tampering",
+                      "severity":  "CRITICAL",
+                      "status":  401,
+                      "endpoint":  "/api/auth/me",
+                      "timestamp":  "2026-06-13T10:10:41.0155300+05:30"
+                  },
+                  {
+                      "note":  "Admin access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Admin",
+                      "timestamp":  "2026-06-13T10:10:41.2543128+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "note":  "Farmer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Farmer",
+                      "timestamp":  "2026-06-13T10:10:41.4853905+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "note":  "Buyer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Buyer",
+                      "timestamp":  "2026-06-13T10:10:41.7289206+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "note":  "Admin access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Admin",
+                      "timestamp":  "2026-06-13T10:10:41.9601035+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/marketplace"
+                  },
+                  {
+                      "note":  "Farmer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Farmer",
+                      "timestamp":  "2026-06-13T10:10:42.2159714+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/marketplace"
+                  },
+                  {
+                      "note":  "Buyer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Buyer",
+                      "timestamp":  "2026-06-13T10:10:42.4556314+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/contracts/marketplace"
+                  },
+                  {
+                      "note":  "Admin access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Admin",
+                      "timestamp":  "2026-06-13T10:10:42.6857504+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/chats"
+                  },
+                  {
+                      "note":  "Farmer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Farmer",
+                      "timestamp":  "2026-06-13T10:10:42.9293707+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/chats"
+                  },
+                  {
+                      "note":  "Buyer access",
+                      "method":  "GET",
+                      "severity":  "INFO",
+                      "role":  "Buyer",
+                      "timestamp":  "2026-06-13T10:10:43.1687145+05:30",
+                      "allowed":  true,
+                      "test_category":  "RBAC",
+                      "status":  200,
+                      "endpoint":  "/api/chats"
+                  },
+                  {
+                      "test_category":  "Injection",
+                      "timestamp":  "2026-06-13T10:10:43.4358922+05:30",
+                      "query_param":  "\u0027 OR \u00271\u0027=\u00271",
+                      "method":  "GET",
+                      "status":  200,
+                      "severity":  "LOW",
+                      "note":  "SQLi probe",
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "test_category":  "Injection",
+                      "timestamp":  "2026-06-13T10:10:43.6760527+05:30",
+                      "query_param":  "\u0027 OR 1=1--",
+                      "method":  "GET",
+                      "status":  200,
+                      "severity":  "LOW",
+                      "note":  "SQLi probe",
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "test_category":  "Injection",
+                      "timestamp":  "2026-06-13T10:10:43.9147964+05:30",
+                      "query_param":  "\u0027; DROP TABLE--",
+                      "method":  "GET",
+                      "status":  200,
+                      "severity":  "LOW",
+                      "note":  "SQLi probe",
+                      "endpoint":  "/api/contracts"
+                  },
+                  {
+                      "hit_at":  0,
+                      "rate_limit_hit":  false,
+                      "method":  "GET",
+                      "timestamp":  "2026-06-13T10:10:51.0896074+05:30",
+                      "severity":  "MEDIUM",
+                      "test_type":  "Burst",
+                      "finding":  true,
+                      "test_category":  "Rate Limiting",
+                      "burst_count":  30,
+                      "endpoint":  "/api/chats",
+                      "note":  "No rate limiting"
+                  },
+                  {
+                      "secretsFound":  true,
+                      "timestamp":  "2026-06-13T10:10:51.1065212+05:30",
+                      "files":  [
+                                    "backend/data.js - hardcoded passwords",
+                                    "google-services.json - Firebase creds"
+                                ],
+                      "test_category":  "Hardcoded Secrets",
+                      "severity":  "HIGH",
+                      "test_type":  "Secrets",
+                      "note":  "Credentials scan",
+                      "endpoint":  "N/A"
+                  }
+              ],
+    "endpoints":  {
+                      "total":  11,
+                      "public":  9,
+                      "authRequired":  2
+                  }
+}
