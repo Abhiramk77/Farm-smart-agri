@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "homepage": "https://Abhiramk77.github.io/Smart-Agri-pdd",
+  "homepage": "https://Abhiramk77.github.io/Farm-smart-agri",
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",

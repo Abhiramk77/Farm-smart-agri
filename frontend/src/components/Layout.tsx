@@ -10,7 +10,8 @@ import {
   Menu,
   LogOut,
   CreditCard,
-  ArrowLeft
+  ArrowLeft,
+  Leaf
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { VoiceAssistant } from './VoiceAssistant';
@@ -79,8 +80,8 @@ export function Layout({ children }: {children: React.ReactNode;}) {
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-            S
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+            <Leaf size={20} />
           </div>
           <span className="font-bold text-lg text-primary-dark hidden sm:block">
             Smart Agri

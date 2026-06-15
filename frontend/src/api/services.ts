@@ -37,12 +37,36 @@ export interface ChatThread {
 }
 
 export const authService = {
-  login: (data: any) => 
-    apiClient.post<{ user: User, token: string }>('/auth/login', data),
-  signup: (data: any) =>
-    apiClient.post<{ user: User, token: string }>('/auth/signup', data),
-  getProfile: () => 
-    apiClient.get<User>('/auth/me')
+  login: async (data: any) => {
+    if (data.role) localStorage.setItem('mock_role', data.role);
+    const mockUser: User = {
+      id: 'mock-user-123',
+      name: data.name || (data.email ? data.email.split('@')[0] : 'Mock User'),
+      role: data.role || (localStorage.getItem('mock_role') as any) || 'buyer'
+    };
+    return { user: mockUser, token: 'mock-token-123' };
+  },
+  signup: async (data: any) => {
+    if (data.role) localStorage.setItem('mock_role', data.role);
+    if (data.category) localStorage.setItem('mock_category', data.category);
+    
+    const mockUser: User = {
+      id: 'mock-user-123',
+      name: data.name || 'Mock User',
+      role: data.role || 'buyer',
+      category: data.category
+    };
+    return { user: mockUser, token: 'mock-token-123' };
+  },
+  getProfile: async () => {
+    const mockUser: User = {
+      id: 'mock-user-123',
+      name: 'Mock User',
+      role: (localStorage.getItem('mock_role') as any) || 'buyer',
+      category: (localStorage.getItem('mock_category') as any) || null
+    };
+    return mockUser;
+  }
 };
 
 export const contractService = {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, Phone, ArrowRight, MapPin, Building } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, MapPin, Building, Leaf } from 'lucide-react';
 import { ROLES } from '../data/mockData';
 
 export function Signup() {
@@ -55,6 +55,11 @@ export function Signup() {
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
+            <Leaf size={28} />
+          </div>
+        </div>
         <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-2">
           Create your account
         </h2>

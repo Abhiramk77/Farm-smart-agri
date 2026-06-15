@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROLES } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Leaf } from 'lucide-react';
 export function Landing() {
   const navigate = useNavigate();
   const { setPendingRole } = useAuth();
@@ -23,8 +23,8 @@ export function Landing() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="p-6 flex justify-between items-center bg-white shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-            S
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+            <Leaf size={20} />
           </div>
           <span className="font-bold text-xl text-primary-dark">
             Smart Agri

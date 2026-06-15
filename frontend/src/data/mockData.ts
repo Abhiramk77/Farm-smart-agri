@@ -2,23 +2,22 @@ export const ROLES = [
 {
   id: 'agriculture',
   name: 'Agriculture Farmer',
-  image: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&q=80&w=800'
+  image: '/Farm-smart-agri/images/agriculture.png'
 },
 {
   id: 'aquaculture',
   name: 'Aquaculture Farmer',
-  image: 'https://images.unsplash.com/photo-1535591273668-578e31182c4f?auto=format&fit=crop&q=80&w=800'
+  image: '/Farm-smart-agri/images/aquaculture.png'
 },
 {
   id: 'dairy',
   name: 'Dairy Farmer',
-  image: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&q=80&w=800'
+  image: '/Farm-smart-agri/images/dairy.png'
 },
 {
   id: 'poultry',
   name: 'Poultry Farmer',
-  image:
-  'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=800'
+  image: '/Farm-smart-agri/images/poultry.png'
 },
 {
   id: 'buyer',

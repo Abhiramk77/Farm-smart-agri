@@ -345,9 +345,7 @@ class _LandingPageState extends State<LandingPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
-                child: Text('S',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Icon(Icons.eco, color: Colors.white, size: 20),
               ),
             ),
             const SizedBox(width: 8),
@@ -565,11 +563,7 @@ class _SignupPageState extends State<SignupPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
-                    child: Text('S',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 24)),
+                    child: Icon(Icons.eco, color: Colors.white, size: 32),
                   ),
                 ),
               ),
@@ -677,10 +671,10 @@ class _LoginPageState extends State<LoginPage> {
   final _cityCtrl = TextEditingController();
 
   void _login() {
-    if (_nameCtrl.text.isEmpty) return;
+    if (_nameCtrl.text.isEmpty && _emailCtrl.text.isEmpty) return;
     final user = User(
       id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-      name: _nameCtrl.text,
+      name: _nameCtrl.text.isNotEmpty ? _nameCtrl.text : (_emailCtrl.text.contains('@') ? _emailCtrl.text.split('@')[0] : _emailCtrl.text),
       role: _role,
       category: _role == UserRole.farmer ? FarmerCategory.agriculture : null,
       mobile: _mobileCtrl.text,
@@ -710,11 +704,7 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
-                  child: Text('S',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24)),
+                  child: Icon(Icons.eco, color: Colors.white, size: 32),
                 ),
               ),
               const SizedBox(height: 16),
@@ -773,7 +763,7 @@ class _LoginPageState extends State<LoginPage> {
               _field('Mobile Number', Icons.phone_outlined, _mobileCtrl,
                   type: TextInputType.phone),
               const SizedBox(height: 12),
-              _field('Email', Icons.email_outlined, _emailCtrl,
+              _field('Email Address', Icons.email_outlined, _emailCtrl,
                   type: TextInputType.emailAddress),
               const SizedBox(height: 12),
               Row(children: [
