@@ -6,8 +6,9 @@ import {
   Video,
   MoreVertical,
   ArrowLeft,
-  Loader2 } from
-'lucide-react';
+  Loader2,
+  MessageSquare
+} from 'lucide-react';
 import { chatService, ChatThread } from '../api/services';
 
 export function Chat() {
@@ -16,6 +17,13 @@ export function Chat() {
   const [chats, setChats] = useState<ChatThread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sentMessages, setSentMessages] = useState<string[]>([]);
+
+  const handleSend = () => {
+    if (!message.trim()) return;
+    setSentMessages([...sentMessages, message]);
+    setMessage('');
+  };
 
   useEffect(() => {
     chatService.getChats()
@@ -165,6 +173,16 @@ export function Chat() {
                 </div>
               </div>
             </div>
+            {sentMessages.map((msg, i) => (
+              <div key={i} className="flex justify-end">
+                <div className="bg-primary text-white py-3 px-4 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm">
+                  {msg}
+                  <div className="text-[10px] text-white/70 mt-1 text-right">
+                    {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Input Area */}
@@ -174,10 +192,11 @@ export function Chat() {
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Type a message..."
               className="flex-1 bg-transparent outline-none text-sm" />
             
-              <button className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shrink-0 hover:bg-primary-dark transition-colors">
+              <button onClick={handleSend} className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shrink-0 hover:bg-primary-dark transition-colors">
                 <Send size={18} className="ml-1" />
               </button>
             </div>
