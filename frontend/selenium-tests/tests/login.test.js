@@ -3,7 +3,7 @@ import chrome from 'selenium-webdriver/chrome.js';
 import assert from 'assert';
 
 describe('Login Flow E2E Test', function () {
-  this.timeout(60000); // 60 seconds timeout for CI
+  this.timeout(60000);
   let driver;
 
   before(async function () {
@@ -34,25 +34,50 @@ describe('Login Flow E2E Test', function () {
     }
   });
 
-  it('should successfully log in as farmer and redirect to dashboard', async function () {
-    // Navigate to the local dev server
+  it('should successfully log in as farmer and redirect to chat/dashboard', async function () {
+    // Navigate to the login page (with Vite base path)
     await driver.get('http://localhost:5173/Farm-smart-agri/#/login');
 
-    // Wait for the email input to be visible
-    const emailInput = await driver.wait(until.elementLocated(By.id('email')), 10000);
+    // Wait for the form to be visible
+    await driver.wait(until.elementLocated(By.css('form')), 10000);
 
-    // Type the farmer email
+    // Fill in Full Name
+    const nameInput = await driver.findElement(By.css('input[name="name"]'));
+    await nameInput.sendKeys('Test Farmer');
+
+    // Fill in Phone Number
+    const mobileInput = await driver.findElement(By.css('input[name="mobile"]'));
+    await mobileInput.sendKeys('9999999999');
+
+    // Fill in Email
+    const emailInput = await driver.findElement(By.id('email'));
     await emailInput.sendKeys('farmer@farming.com');
+
+    // Fill in State
+    const stateInput = await driver.findElement(By.css('input[name="state"]'));
+    await stateInput.sendKeys('Tamil Nadu');
+
+    // Fill in City
+    const cityInput = await driver.findElement(By.css('input[name="city"]'));
+    await cityInput.sendKeys('Chennai');
 
     // Click the login button
     const loginButton = await driver.findElement(By.id('login-button'));
     await loginButton.click();
 
-    // Wait for redirect to happen (wait for URL to change to dashboard)
-    await driver.wait(until.urlContains('/dashboard'), 15000);
+    // After login, app navigates to /chat or /dashboard
+    await driver.wait(
+      async () => {
+        const url = await driver.getCurrentUrl();
+        return url.includes('/chat') || url.includes('/dashboard');
+      },
+      15000,
+      'User was not redirected after login'
+    );
 
-    // Verify the URL
+    // Verify the URL changed away from /login
     const currentUrl = await driver.getCurrentUrl();
-    assert.strictEqual(currentUrl.includes('/dashboard'), true, 'User was not redirected to the dashboard');
+    const redirected = currentUrl.includes('/chat') || currentUrl.includes('/dashboard');
+    assert.strictEqual(redirected, true, `Expected redirect to /chat or /dashboard, got: ${currentUrl}`);
   });
 });
