@@ -16,6 +16,12 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    - name: Setup Chrome and ChromeDriver
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+      id: setup-chrome
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -25,14 +31,11 @@ jobs:
       working-directory: frontend
       run: npm install
 
-    - name: Install Google Chrome
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
-
-    - name: Run Tests
+    - name: Run Dev Server and Tests
       working-directory: frontend
+      env:
+        CHROMEWEBDRIVER: ${{ steps.setup-chrome.outputs.chromedriver-path }}
       run: |
         npm run dev &
-        npx wait-on http://localhost:5173
+        npx wait-on http://localhost:5173 --timeout 30000
         npm run login
