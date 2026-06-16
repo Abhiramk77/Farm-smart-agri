@@ -36,7 +36,7 @@ describe('Login Flow E2E Test', function () {
 
   it('should successfully log in as farmer and redirect to dashboard', async function () {
     // Navigate to the local dev server
-    await driver.get('http://localhost:5173/#/login');
+    await driver.get('http://localhost:5173/Farm-smart-agri/#/login');
 
     // Wait for the email input to be visible
     const emailInput = await driver.wait(until.elementLocated(By.id('email')), 10000);

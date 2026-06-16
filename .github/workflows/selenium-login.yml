@@ -37,5 +37,5 @@ jobs:
         CHROMEWEBDRIVER: ${{ steps.setup-chrome.outputs.chromedriver-path }}
       run: |
         npm run dev &
-        npx wait-on http://localhost:5173 --timeout 30000
+        npx wait-on http://localhost:5173/Farm-smart-agri/ --timeout 30000
         npm run login
