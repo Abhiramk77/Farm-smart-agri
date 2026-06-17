@@ -26,10 +26,10 @@ export function Login() {
     setError('');
     try {
       await login({ ...formData, role });
-      // Wait a moment for auth state to update, then navigate based on role
-      // AuthContext sets user state, we can let ProtectedRoute handle redirection 
-      // or redirect to a common dashboard router
-      navigate('/chat'); // Temporarily navigate, the App routes will redirect if protected
+      // Navigate directly to role-specific dashboard to avoid ProtectedRoute race condition
+      if (role === 'buyer') navigate('/buyer/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/farmer/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
     }

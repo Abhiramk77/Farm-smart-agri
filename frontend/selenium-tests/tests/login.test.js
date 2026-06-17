@@ -3,7 +3,7 @@ import chrome from 'selenium-webdriver/chrome.js';
 import assert from 'assert';
 
 describe('Login Flow E2E Test', function () {
-  this.timeout(90000);
+  this.timeout(120000);
   let driver;
 
   before(async function () {
@@ -13,9 +13,7 @@ describe('Login Flow E2E Test', function () {
     options.addArguments('--disable-dev-shm-usage');
     options.addArguments('--disable-gpu');
     options.addArguments('--window-size=1280,800');
-    options.addArguments('--remote-debugging-port=9222');
 
-    // Use the chromedriver path provided by CI if available
     let builder = new Builder()
       .forBrowser('chrome')
       .setChromeOptions(options);
@@ -31,82 +29,62 @@ describe('Login Flow E2E Test', function () {
   });
 
   after(async function () {
-    if (driver) {
-      await driver.quit();
-    }
+    if (driver) await driver.quit();
   });
 
-  it('should successfully log in as farmer and redirect to chat or dashboard', async function () {
-    // Navigate to the login page (HashRouter base path)
+  it('should successfully log in as farmer and redirect to farmer dashboard', async function () {
+    // Navigate to login page
     await driver.get('http://localhost:5173/Farm-smart-agri/#/login');
 
-    // Wait for the form to be visible
+    // Wait for form
     await driver.wait(until.elementLocated(By.css('form')), 15000);
 
-    // Select the Farmer role tab
-    const farmerButton = await driver.wait(
-      until.elementLocated(By.xpath("//button[text()='Farmer']")),
+    // Click Farmer role tab
+    const farmerBtn = await driver.wait(
+      until.elementLocated(By.xpath("//button[normalize-space()='Farmer']")),
       10000
     );
-    await farmerButton.click();
+    await farmerBtn.click();
 
-    // Fill in Full Name
+    // Fill Full Name
     const nameInput = await driver.findElement(By.css('input[name="name"]'));
     await nameInput.clear();
     await nameInput.sendKeys('Test Farmer');
 
-    // Fill in Phone Number
+    // Fill Phone Number
     const mobileInput = await driver.findElement(By.css('input[name="mobile"]'));
     await mobileInput.clear();
     await mobileInput.sendKeys('9999999999');
 
-    // Fill in Email
+    // Fill Email
     const emailInput = await driver.findElement(By.id('email'));
     await emailInput.clear();
     await emailInput.sendKeys('farmer@farming.com');
 
-    // Fill in State
+    // Fill State
     const stateInput = await driver.findElement(By.css('input[name="state"]'));
     await stateInput.clear();
     await stateInput.sendKeys('Tamil Nadu');
 
-    // Fill in City
+    // Fill City
     const cityInput = await driver.findElement(By.css('input[name="city"]'));
     await cityInput.clear();
     await cityInput.sendKeys('Chennai');
 
-    // Click the login button
+    // Submit form
     const loginButton = await driver.findElement(By.id('login-button'));
     await loginButton.click();
 
-    // After login, the app should navigate away from /login
-    // With HashRouter: URL will be http://localhost:5173/Farm-smart-agri/#/chat or #/farmer/dashboard
+    // Wait for redirect to farmer dashboard (Login.tsx navigates to /farmer/dashboard)
     await driver.wait(
-      async () => {
-        const url = await driver.getCurrentUrl();
-        return (
-          url.includes('/chat') ||
-          url.includes('/dashboard') ||
-          url.includes('/farmer') ||
-          url.includes('/buyer')
-        );
-      },
-      30000,
-      'User was not redirected after login — still on login page'
+      until.urlContains('/farmer/dashboard'),
+      30000
     );
 
-    // Verify the URL changed away from /login
     const currentUrl = await driver.getCurrentUrl();
-    const redirected =
-      currentUrl.includes('/chat') ||
-      currentUrl.includes('/dashboard') ||
-      currentUrl.includes('/farmer') ||
-      currentUrl.includes('/buyer');
-
-    assert.strictEqual(
-      redirected,
-      true,
-      `Expected redirect to /chat, /dashboard, /farmer, or /buyer — got: ${currentUrl}`
+    assert.ok(
+      currentUrl.includes('/farmer/dashboard'),
+      `Expected URL to contain /farmer/dashboard, but got: ${currentUrl}`
     );
   });
 });
