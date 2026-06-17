@@ -16,26 +16,42 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Setup Chrome and ChromeDriver
-      uses: browser-actions/setup-chrome@v1
-      with:
-        chrome-version: stable
-      id: setup-chrome
-
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20'
 
+    - name: Setup Chrome
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+      id: setup-chrome
+
+    - name: Install ChromeDriver
+      run: |
+        CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1)
+        echo "Chrome version: $CHROME_VERSION"
+        npx chromedriver --version || true
+        # Install matching chromedriver via npm
+        npm install -g chromedriver --detect_chromedriver_version
+        CHROMEDRIVER_PATH=$(which chromedriver)
+        echo "CHROMEWEBDRIVER=$(dirname $CHROMEDRIVER_PATH)" >> $GITHUB_ENV
+        echo "ChromeDriver at: $CHROMEDRIVER_PATH"
+
     - name: Install Dependencies
       working-directory: frontend
       run: npm install
 
-    - name: Run Dev Server and Tests
+    - name: Start Dev Server
       working-directory: frontend
-      env:
-        CHROMEWEBDRIVER: ${{ steps.setup-chrome.outputs.chromedriver-path }}
       run: |
         npm run dev &
-        npx wait-on http://localhost:5173/Farm-smart-agri/ --timeout 30000
-        npm run login
+        echo "Dev server PID: $!"
+        npx wait-on http://localhost:5173/Farm-smart-agri/ --timeout 60000 --verbose
+        echo "Dev server is ready"
+
+    - name: Run Selenium Tests
+      working-directory: frontend
+      env:
+        CHROMEWEBDRIVER: ${{ env.CHROMEWEBDRIVER }}
+      run: npm run login
