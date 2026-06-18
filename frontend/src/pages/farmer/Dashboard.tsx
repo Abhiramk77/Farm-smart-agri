@@ -13,21 +13,51 @@ export function FarmerDashboard() {
   const stages = ['planting', 'growing', 'harvesting', 'ready', 'delivered'];
 
   useEffect(() => {
+    // Get this user's accepted contract IDs from localStorage
+    const userId = localStorage.getItem('mock_user_id') || 'unknown';
+    const myAcceptedIds: string[] = JSON.parse(
+      localStorage.getItem(`accepted_contracts_${userId}`) || '[]'
+    );
+    // Also load any locally-cached contract objects (survive backend resets)
+    const cachedContracts: Contract[] = JSON.parse(
+      localStorage.getItem(`cached_contracts_${userId}`) || '[]'
+    );
+
     contractService.getContracts('active')
-      .then(data => setActiveContracts(data))
+      .then(data => {
+        // ✅ Only show contracts this specific farmer has personally accepted
+        const myContracts = myAcceptedIds.length > 0
+          ? data.filter(c => myAcceptedIds.includes(c.id))
+          : [];
+
+        if (myContracts.length > 0) {
+          // Save latest snapshot so it survives future backend restarts
+          localStorage.setItem(`cached_contracts_${userId}`, JSON.stringify(myContracts));
+          setActiveContracts(myContracts);
+        } else if (cachedContracts.length > 0) {
+          // Backend returned nothing but we have local cache — use it
+          setActiveContracts(cachedContracts);
+        } else {
+          setActiveContracts([]);
+        }
+      })
       .catch(err => {
         console.error('Failed to fetch contracts', err);
-        setError('Could not load contracts. Please try again later.');
-        // If there's no backend, it's expected to be empty, so we just set empty
-        setActiveContracts([]);
+        // Fall back to locally cached contracts so earnings still show
+        if (cachedContracts.length > 0) {
+          setActiveContracts(cachedContracts);
+        } else {
+          setError('Could not load contracts. Please try again later.');
+          setActiveContracts([]);
+        }
       })
       .finally(() => {
-        // Load local listings
         const localListings = JSON.parse(localStorage.getItem('farmer_listings') || '[]');
         setMyListings(localListings);
         setIsLoading(false);
       });
   }, []);
+
 
   if (isLoading) {
     return (
@@ -81,7 +111,9 @@ export function FarmerDashboard() {
             Expected Revenue
           </p>
           <p className="text-3xl font-bold">₹{totalEarnings.toLocaleString()}</p>
-          <p className="text-sm mt-4 text-white/80">Total gross income</p>
+          <p className="text-sm mt-4 text-white/80">
+            {totalEarnings === 0 ? 'Accept a buyer contract to start earning' : 'Total gross income'}
+          </p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -90,7 +122,7 @@ export function FarmerDashboard() {
           </div>
           <p className="text-gray-500 font-medium mb-1">Est. Profit</p>
           <p className="text-2xl font-bold text-gray-900">₹{(totalEarnings * 0.75).toLocaleString()}</p>
-          <p className="text-sm mt-2 text-green-600 font-medium">+75% Margin</p>
+          <p className="text-sm mt-2 text-green-600 font-medium">{totalEarnings === 0 ? 'No active contracts' : '+75% Margin'}</p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -99,7 +131,7 @@ export function FarmerDashboard() {
           </div>
           <p className="text-gray-500 font-medium mb-1">Est. Expenses</p>
           <p className="text-2xl font-bold text-gray-900">₹{(totalEarnings * 0.25).toLocaleString()}</p>
-          <p className="text-sm mt-2 text-red-600 font-medium">25% Overhead</p>
+          <p className="text-sm mt-2 text-red-600 font-medium">{totalEarnings === 0 ? 'No overhead yet' : '25% Overhead'}</p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -109,7 +141,7 @@ export function FarmerDashboard() {
           <p className="text-gray-500 font-medium mb-1">Active Contracts</p>
           <p className="text-2xl font-bold text-gray-900">{activeContracts.length}</p>
           <p className="text-sm mt-2 text-gray-500">
-            Next: {activeContracts.length > 0 ? activeContracts[0].timeline.split('-')[1] : 'None'}
+            {activeContracts.length > 0 ? `Next: ${activeContracts[0].timeline.split('-')[1]}` : 'None yet'}
           </p>
         </div>
       </div>
@@ -224,13 +256,16 @@ export function FarmerDashboard() {
 
         })}
         {activeContracts.length === 0 &&
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 border-dashed">
-            <p className="text-gray-500 mb-4">No active contracts right now.</p>
+        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+            <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="text-amber-500" size={24} />
+            </div>
+            <p className="text-gray-700 font-semibold mb-1">No active contracts yet</p>
+            <p className="text-gray-400 text-sm mb-4">Browse buyer-released contracts in the Marketplace and accept one to start production.</p>
             <Link
             to="/farmer/marketplace"
-            className="text-primary font-medium hover:underline">
-            
-              Browse Marketplace
+            className="inline-block bg-primary text-white px-5 py-2 rounded-xl font-medium hover:bg-primary-dark transition-colors text-sm">
+              Browse Buyer Contracts
             </Link>
           </div>
         }

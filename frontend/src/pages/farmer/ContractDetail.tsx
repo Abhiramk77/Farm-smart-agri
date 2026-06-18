@@ -26,6 +26,26 @@ export function FarmerContractDetail() {
     setIsSubmitting(true);
     try {
       await contractService.acceptContract(contract.id);
+
+      const userId = localStorage.getItem('mock_user_id') || 'unknown';
+
+      // Save the contract ID to the accepted list
+      const idsKey = `accepted_contracts_${userId}`;
+      const existingIds: string[] = JSON.parse(localStorage.getItem(idsKey) || '[]');
+      if (!existingIds.includes(contract.id)) {
+        localStorage.setItem(idsKey, JSON.stringify([...existingIds, contract.id]));
+      }
+
+      // ✅ Also cache the full contract object so earnings show after re-login
+      const cacheKey = `cached_contracts_${userId}`;
+      const cachedContracts: any[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+      const alreadyCached = cachedContracts.some(c => c.id === contract.id);
+      if (!alreadyCached) {
+        // Mark as active so dashboard shows it correctly
+        const activeContract = { ...contract, status: 'active', progress: 'planting' };
+        localStorage.setItem(cacheKey, JSON.stringify([...cachedContracts, activeContract]));
+      }
+
       navigate('/farmer/dashboard');
     } catch (err) {
       console.error(err);
@@ -35,6 +55,7 @@ export function FarmerContractDetail() {
   };
 
   const handleRejectContract = async () => {
+
     if (!contract) return;
     setIsSubmitting(true);
     try {

@@ -81,13 +81,32 @@ app.get('/api/auth/me', (req, res) => {
 
 // GET /api/contracts
 // Optional query: ?status=
+// Only returns contracts that belong to the requesting farmer (by token)
 app.get('/api/contracts', (req, res) => {
   const { status } = req.query;
-  if (status) {
-    const filtered = contracts.filter(c => c.status === status);
-    return res.json(filtered);
+
+  // Derive userId from Bearer token (format: mock_token_<id>)
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.split(' ')[1] || '';
+  const userId = token.startsWith('mock_token_') ? token.replace('mock_token_', '') : null;
+
+  let result = contracts;
+
+  // Filter to this farmer's accepted contracts when authenticated
+  if (userId) {
+    result = result.filter(c => c.farmerId === userId || (c.status === 'pending'));
+    // For active/completed, only show contracts this farmer accepted
+    if (status === 'active' || status === 'completed') {
+      result = contracts.filter(c => c.status === status && c.farmerId === userId);
+      return res.json(result);
+    }
   }
-  res.json(contracts);
+
+  if (status) {
+    result = contracts.filter(c => c.status === status);
+    return res.json(result);
+  }
+  res.json(result);
 });
 
 // GET /api/contracts/marketplace
@@ -122,9 +141,15 @@ app.post('/api/contracts', (req, res) => {
 app.post('/api/contracts/:id/accept', (req, res) => {
   const index = contracts.findIndex(c => c.id === req.params.id);
   if (index === -1) return res.status(404).json({ message: 'Contract not found' });
-  
+
+  // Tag the contract with the accepting farmer's userId
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.split(' ')[1] || '';
+  const userId = token.startsWith('mock_token_') ? token.replace('mock_token_', '') : null;
+
   contracts[index].status = 'active';
   contracts[index].progress = 'planting';
+  if (userId) contracts[index].farmerId = userId;
   
   res.json(contracts[index]);
 });
