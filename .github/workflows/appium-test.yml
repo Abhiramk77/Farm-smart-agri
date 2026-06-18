@@ -1,0 +1,34 @@
+name: Appium Mobile E2E Testing Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  appium-test:
+    name: Run Appium Android E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Run Appium Tests
+      working-directory: smart_agri_app
+      run: node Appium_Test_Script.js
+
+    - name: Upload Appium Test Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: appium-android-e2e-report
+        path: smart_agri_app/Appium_Mobile_Test_Report.csv

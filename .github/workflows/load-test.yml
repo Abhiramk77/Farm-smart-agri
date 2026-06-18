@@ -1,0 +1,37 @@
+name: API Load Testing Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  load-test:
+    name: Run API Load Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install Root Dependencies
+      run: npm install
+
+    - name: Run Load Test Script
+      run: |
+        node automated_test/load_test.js || true
+
+    - name: Upload Load Test Excel Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: load-test-report
+        path: automated_test/Load_Test_Report.xlsx

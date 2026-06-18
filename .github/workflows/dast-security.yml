@@ -1,0 +1,49 @@
+name: Backend DAST Security Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dast-security-test:
+    name: Run Backend DAST Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install Backend Dependencies
+      working-directory: backend
+      run: npm install
+
+    - name: Start Backend Server
+      working-directory: backend
+      run: |
+        npm start &
+        npx wait-on http://localhost:3000 --timeout 60000
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Run DAST Probes
+      run: |
+        python automated_test/run_dast.py || true
+
+    - name: Upload DAST Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dast-security-report
+        path: automated_test/report.json
