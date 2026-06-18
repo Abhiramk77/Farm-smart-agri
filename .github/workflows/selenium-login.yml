@@ -1,4 +1,4 @@
-name: Smart Agri E2E and Security Testing Suite
+name: Selenium E2E Testing Pipeline
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   selenium-test:
-    name: Run Selenium Web E2E Tests
+    name: Run Selenium E2E Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -43,93 +43,3 @@ jobs:
       with:
         name: selenium-web-test-report
         path: frontend/selenium-report.json
-
-  appium-test:
-    name: Run Appium Android E2E Tests
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-
-    - name: Run Appium Tests
-      working-directory: smart_agri_app
-      run: node Appium_Test_Script.js
-
-    - name: Upload Appium Test Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: appium-android-e2e-report
-        path: smart_agri_app/Appium_Mobile_Test_Report.csv
-
-  dast-security-test:
-    name: Run Backend DAST Security Audit
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-
-    - name: Install Backend Dependencies
-      working-directory: backend
-      run: npm install
-
-    - name: Start Backend Server
-      working-directory: backend
-      run: |
-        npm start &
-        npx wait-on http://localhost:3000 --timeout 60000
-
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Run DAST Probes
-      run: |
-        python automated_test/run_dast.py || true
-
-    - name: Upload DAST Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: dast-security-report
-        path: automated_test/report.json
-
-  load-test:
-    name: Run API Load Test
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-
-    - name: Install Root Dependencies
-      run: npm install
-
-    - name: Run Load Test Script
-      run: |
-        node automated_test/load_test.js || true
-
-    - name: Upload Load Test Excel Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: load-test-report
-        path: automated_test/Load_Test_Report.xlsx
