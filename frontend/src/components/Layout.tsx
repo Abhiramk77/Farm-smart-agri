@@ -18,6 +18,7 @@ import {
   MapPin,
   ShieldCheck,
   ClipboardList,
+  Banknote,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -67,6 +68,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       icon: ClipboardList,
       label: 'Orders',
       path: `${basePath}/orders`,
+    },
+    {
+      icon: Banknote,
+      label: 'COD Payments',
+      path: `${basePath}/payments`,
     },
   ];
 

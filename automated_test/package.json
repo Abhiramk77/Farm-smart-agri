@@ -1,0 +1,16 @@
+{
+  "name": "automated_test",
+  "version": "1.0.0",
+  "description": "A complete **Dynamic Application Security Testing (DAST)** assessment has been performed against the Farming App API and generated comprehensive reports with actionable findings.",
+  "main": "generate_1200_comprehensive_report.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

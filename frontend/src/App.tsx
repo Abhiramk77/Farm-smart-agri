@@ -19,6 +19,7 @@ import { FarmerContractDetail } from './pages/farmer/ContractDetail';
 import { FarmerDashboard } from './pages/farmer/Dashboard';
 import { SellProduct } from './pages/farmer/SellProduct';
 import { OrdersDashboard } from './pages/OrdersDashboard';
+import { PaymentsDashboard } from './pages/PaymentsDashboard';
 
 // Protected Route Wrapper
 function ProtectedRoute({
@@ -62,6 +63,7 @@ function AppRoutes() {
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="contracts" element={<BuyerDashboard />} />
                 <Route path="orders" element={<OrdersDashboard />} />
+                <Route path="payments" element={<PaymentsDashboard />} />
               </Routes>
             </Layout>
           </ProtectedRoute>
@@ -79,6 +81,7 @@ function AppRoutes() {
                 <Route path="contract/:id" element={<FarmerContractDetail />} />
                 <Route path="sell" element={<SellProduct />} />
                 <Route path="orders" element={<OrdersDashboard />} />
+                <Route path="payments" element={<PaymentsDashboard />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

@@ -9,16 +9,90 @@ export function OrdersDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    contractService
-      .getContracts()
-      .then((data) => {
-        const sanitized = (data || []).map(sanitizeContract);
-        // If the user is a farmer, they might want to see only contracts relevant to them
-        // We'll show all contracts they are involved with or in their category depending on the service.
-        setContracts(sanitized);
-      })
-      .catch((err) => console.error('Failed to load orders', err))
-      .finally(() => setIsLoading(false));
+    const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
+    const userRole = user?.role || localStorage.getItem('mock_role') || 'buyer';
+    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
+    const farmerCategory = user?.category || localStorage.getItem('mock_category') || 'agriculture';
+
+    if (userRole === 'buyer') {
+      // BUYER ACCOUNT SCOPING
+      const localKey = `buyer_contracts_${userId}`;
+      const storedLocal = localStorage.getItem(localKey);
+
+      if (storedLocal !== null) {
+        try {
+          const parsed: Contract[] = JSON.parse(storedLocal).map(sanitizeContract);
+          setContracts(parsed);
+          setIsLoading(false);
+          return;
+        } catch {
+          // fallback
+        }
+      }
+
+      // Default sample buyer or fetch initial
+      if (userEmail === 'buyer@farming.com' || userId === 'u3') {
+        contractService
+          .getContracts()
+          .then((data) => {
+            const sanitized = (data || []).map(sanitizeContract);
+            localStorage.setItem(localKey, JSON.stringify(sanitized));
+            setContracts(sanitized);
+          })
+          .catch(() => {
+            localStorage.setItem(localKey, JSON.stringify([]));
+            setContracts([]);
+          })
+          .finally(() => setIsLoading(false));
+      } else {
+        // New buyer account has no orders yet
+        localStorage.setItem(localKey, JSON.stringify([]));
+        setContracts([]);
+        setIsLoading(false);
+      }
+    } else {
+      // FARMER ACCOUNT SCOPING
+      const acceptedIdsKey = `accepted_contracts_${userId}`;
+      const cachedKey = `cached_contracts_${userId}`;
+      
+      const myAcceptedIds: string[] = JSON.parse(
+        localStorage.getItem(acceptedIdsKey) || '[]'
+      );
+      const rawCached = JSON.parse(
+        localStorage.getItem(cachedKey) || '[]'
+      );
+      const cachedContracts: Contract[] = (rawCached || []).map(sanitizeContract);
+
+      contractService
+        .getContracts()
+        .then((data) => {
+          const sanitizedData = (data || []).map(sanitizeContract);
+          const contractsMap = new Map<string, Contract>();
+
+          // Only contracts accepted by this farmer account or matched to this farmer's category
+          sanitizedData.forEach((c) => {
+            if (myAcceptedIds.includes(c.id) || c.farmerId === userId) {
+              contractsMap.set(c.id, c);
+            } else if (myAcceptedIds.length === 0 && c.category === farmerCategory) {
+              // Sample farmer fallback for initial demonstration
+              contractsMap.set(c.id, c);
+            }
+          });
+
+          // Overlay cached contracts belonging to this account
+          cachedContracts.forEach((c) => {
+            contractsMap.set(c.id, c);
+          });
+
+          const accountContracts = Array.from(contractsMap.values());
+          setContracts(accountContracts);
+        })
+        .catch((err) => {
+          console.error('Failed to load farmer account orders', err);
+          setContracts(cachedContracts);
+        })
+        .finally(() => setIsLoading(false));
+    }
   }, [user]);
 
   const handleDelete = async (id: string) => {
@@ -26,15 +100,19 @@ export function OrdersDashboard() {
       await contractService.deleteContract(id);
       
       const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
-      const localKey = `buyer_contracts_${userId}`;
+      const userRole = user?.role || localStorage.getItem('mock_role') || 'buyer';
       
-      setContracts(prev => {
-        const filtered = prev.filter(c => c.id !== id);
-        localStorage.setItem(localKey, JSON.stringify(filtered)); // Also force save here
+      setContracts((prev) => {
+        const filtered = prev.filter((c) => c.id !== id);
+        if (userRole === 'buyer') {
+          localStorage.setItem(`buyer_contracts_${userId}`, JSON.stringify(filtered));
+        } else {
+          localStorage.setItem(`cached_contracts_${userId}`, JSON.stringify(filtered));
+        }
         return filtered;
       });
     } catch (e) {
-      console.error('Failed to delete', e);
+      console.error('Failed to delete order', e);
     }
   };
 
@@ -46,17 +124,20 @@ export function OrdersDashboard() {
     );
   }
 
-  // Calculate order statistics
-  const accepted = contracts.filter(c => c.status === 'active' || c.status === 'completed').length;
-  const rejected = contracts.filter(c => c.status === 'rejected').length;
-  const pending = contracts.filter(c => c.status === 'pending').length;
+  // Calculate order statistics for THIS account
+  const accepted = contracts.filter((c) => c.status === 'active' || c.status === 'completed').length;
+  const rejected = contracts.filter((c) => c.status === 'rejected').length;
+  const pending = contracts.filter((c) => c.status === 'pending').length;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Orders Dashboard</h1>
         <p className="text-gray-500 mt-2 text-lg">
-          Track and analyze the status of all your agricultural orders.
+          Track and analyze the status of orders associated with account{' '}
+          <span className="font-semibold text-primary">
+            {user?.name || localStorage.getItem('mock_user_name') || 'User'}
+          </span>.
         </p>
       </div>
 
@@ -93,8 +174,11 @@ export function OrdersDashboard() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">All Orders Overview</h2>
+        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-900">Account Orders Overview</h2>
+          <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-semibold">
+            {user?.role === 'farmer' ? 'Farmer Orders' : 'Buyer Orders'}
+          </span>
         </div>
         <div className="overflow-x-auto">
           {contracts.length > 0 ? (
@@ -153,8 +237,8 @@ export function OrdersDashboard() {
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText size={32} className="text-gray-400" />
               </div>
-              <p className="text-lg font-medium text-gray-900 mb-1">No orders found.</p>
-              <p className="text-sm">You do not have any orders to display at this time.</p>
+              <p className="text-lg font-medium text-gray-900 mb-1">No orders found for this account.</p>
+              <p className="text-sm">You do not have any orders associated with your account at this time.</p>
             </div>
           )}
         </div>
