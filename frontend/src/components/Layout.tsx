@@ -9,26 +9,38 @@ import {
   Bell,
   Menu,
   LogOut,
-  CreditCard,
   ArrowLeft,
-  Leaf
+  Leaf,
+  Repeat,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  ShieldCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { VoiceAssistant } from './VoiceAssistant';
-export function Layout({ children }: {children: React.ReactNode;}) {
-  const { user, logout } = useAuth();
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const { user, logout, switchRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  const userNotifications = MOCK_NOTIFICATIONS.filter(n => n.targetRole === user?.role);
-  const unreadCount = userNotifications.filter(n => !n.read).length;
+  const userNotifications = MOCK_NOTIFICATIONS.filter(
+    (n) => n.targetRole === user?.role
+  );
+  const unreadCount = userNotifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
         setIsNotificationsOpen(false);
       }
     };
@@ -37,43 +49,65 @@ export function Layout({ children }: {children: React.ReactNode;}) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
   const isBuyer = user?.role === 'buyer';
   const basePath = isBuyer ? '/buyer' : '/farmer';
   const navItems = [
-  {
-    icon: Home,
-    label: 'Dashboard',
-    path: `${basePath}/dashboard`
-  },
-  {
-    icon: FileText,
-    label: isBuyer ? 'Contracts' : 'Marketplace',
-    path: isBuyer ? `${basePath}/contracts` : `${basePath}/marketplace`
-  },
-  {
-    icon: MessageSquare,
-    label: 'Chat',
-    path: '/chat'
-  },
-  {
-    icon: CreditCard,
-    label: 'Payment Status',
-    path: `${basePath}/payments`
-  }];
+    {
+      icon: Home,
+      label: 'Dashboard',
+      path: `${basePath}/dashboard`,
+    },
+    {
+      icon: FileText,
+      label: isBuyer ? 'Contracts' : 'Marketplace',
+      path: isBuyer ? `${basePath}/contracts` : `${basePath}/marketplace`,
+    },
+    {
+      icon: ClipboardList,
+      label: 'Orders',
+      path: `${basePath}/orders`,
+    },
+  ];
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const handleRoleToggle = () => {
+    const nextRole = isBuyer ? 'farmer' : 'buyer';
+    switchRole(nextRole);
+    if (nextRole === 'buyer') {
+      navigate('/buyer/dashboard');
+    } else {
+      navigate('/farmer/dashboard');
+    }
+  };
+
   if (!user) {
     return <div className="min-h-screen bg-background">{children}</div>;
   }
+
+  const categoryName = user.category
+    ? user.category.charAt(0).toUpperCase() + user.category.slice(1)
+    : localStorage.getItem('mock_category')
+    ? localStorage.getItem('mock_category')!.charAt(0).toUpperCase() +
+      localStorage.getItem('mock_category')!.slice(1)
+    : '';
+
+  const displayRoleTitle = isBuyer
+    ? 'Buyer'
+    : categoryName
+    ? `${categoryName} Farmer`
+    : 'Farmer';
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Top Navbar (Mobile & Desktop) */}
       <header className="bg-white border-b border-gray-200 fixed top-0 w-full z-30 h-16 flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="p-1.5 md:p-2 -ml-1 md:-ml-2 text-gray-500 hover:bg-gray-100 hover:text-primary rounded-full transition-colors focus:outline-none"
             title="Go Back"
@@ -88,9 +122,9 @@ export function Layout({ children }: {children: React.ReactNode;}) {
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="relative" ref={notificationRef}>
-            <button 
+            <button
               className="p-2 text-gray-500 hover:text-primary relative focus:outline-none"
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             >
@@ -104,7 +138,9 @@ export function Layout({ children }: {children: React.ReactNode;}) {
             {isNotificationsOpen && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-800">Notifications</h3>
+                  <h3 className="font-semibold text-gray-800">
+                    Notifications
+                  </h3>
                   <button className="text-xs text-primary hover:text-primary-dark font-medium">
                     Mark all as read
                   </button>
@@ -112,12 +148,20 @@ export function Layout({ children }: {children: React.ReactNode;}) {
                 <div className="max-h-[400px] overflow-y-auto">
                   {userNotifications.length > 0 ? (
                     userNotifications.map((notification) => (
-                      <div 
-                        key={notification.id} 
-                        className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-primary/5' : ''}`}
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          !notification.read ? 'bg-primary/5' : ''
+                        }`}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <h4 className={`text-sm ${!notification.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-800'}`}>
+                          <h4
+                            className={`text-sm ${
+                              !notification.read
+                                ? 'font-semibold text-gray-900'
+                                : 'font-medium text-gray-800'
+                            }`}
+                          >
                             {notification.title}
                           </h4>
                           <span className="text-[10px] text-gray-500 whitespace-nowrap ml-2">
@@ -139,22 +183,27 @@ export function Layout({ children }: {children: React.ReactNode;}) {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden">
+
+          <div
+            onClick={() => setShowProfileModal(true)}
+            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-xl transition-colors"
+            title="Click to view saved account profile info"
+          >
+            <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden border border-primary/20">
               <img
                 src={`https://ui-avatars.com/api/?name=${user.name}&background=2D6A4F&color=fff`}
-                alt="Avatar" />
-              
+                alt="Avatar"
+              />
             </div>
-            <span className="text-sm font-medium hidden md:block">
+            <span className="text-sm font-medium hidden md:block text-gray-800">
               {user.name}
             </span>
           </div>
           <button
             onClick={handleLogout}
             className="p-2 text-gray-500 hover:text-red-500 hidden md:block"
-            title="Logout">
-            
+            title="Logout"
+          >
             <LogOut size={20} />
           </button>
         </div>
@@ -169,20 +218,28 @@ export function Layout({ children }: {children: React.ReactNode;}) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}>
-                
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
+                }`}
+              >
                 <item.icon size={20} />
                 <span>{item.label}</span>
-              </Link>);
-
+              </Link>
+            );
           })}
         </nav>
+
         <div className="p-4 border-t border-gray-100">
-          <div className="bg-gray-50 p-4 rounded-xl">
-            <p className="text-xs text-gray-500 mb-1">Current Role</p>
-            <p className="text-sm font-medium capitalize">
-              {user.role} {user.category ? `(${user.category})` : ''}
-            </p>
+          <div className="bg-gray-50 p-3.5 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Current Role</p>
+              <p className="text-sm font-semibold capitalize text-primary">
+                {displayRoleTitle}
+              </p>
+            </div>
+
           </div>
         </div>
       </aside>
@@ -200,26 +257,122 @@ export function Layout({ children }: {children: React.ReactNode;}) {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-primary' : 'text-gray-500'}`}>
-              
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+                isActive ? 'text-primary' : 'text-gray-500'
+              }`}
+            >
               <item.icon
                 size={20}
-                className={isActive ? 'fill-primary/20' : ''} />
-              
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </Link>);
+                className={isActive ? 'fill-primary/20' : ''}
+              />
 
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
         })}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500">
-          
+          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500"
+        >
           <LogOut size={20} />
           <span className="text-[10px] font-medium">Logout</span>
         </button>
       </nav>
 
-      <VoiceAssistant />
-    </div>);
+      {/* Account Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowProfileModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
 
+            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-2xl font-bold border border-primary/20">
+                {user.name ? user.name.slice(0, 2).toUpperCase() : 'US'}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{user.name}</h3>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 capitalize mt-1">
+                  {user.role === 'farmer' ? `${user.category || ''} Farmer` : 'Buyer'} Account
+                </span>
+              </div>
+            </div>
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              Saved Account Information
+            </h4>
+
+            <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <UserIcon size={16} className="text-primary" /> Full Name
+                </span>
+                <span className="font-semibold text-gray-900">{user.name || 'Not set'}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Mail size={16} className="text-primary" /> Email
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {user.email || localStorage.getItem('mock_user_email') || 'Not set'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Phone size={16} className="text-primary" /> Mobile
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {user.mobile || localStorage.getItem('mock_user_mobile') || 'Not set'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <MapPin size={16} className="text-primary" /> Location
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {user.city || localStorage.getItem('mock_user_city')
+                    ? `${user.city || localStorage.getItem('mock_user_city')}, ${user.state || localStorage.getItem('mock_user_state')}`
+                    : user.state || localStorage.getItem('mock_user_state') || 'Not set'}
+                </span>
+              </div>
+
+              {user.role === 'farmer' && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-primary" /> Farmer Category
+                  </span>
+                  <span className="font-semibold text-gray-900 capitalize">
+                    {user.category || 'dairy'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-between items-center">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-1.5"
+              >
+                <LogOut size={16} /> Sign Out
+              </button>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="px-5 py-2 text-sm font-medium bg-primary text-white hover:bg-primary-dark rounded-xl transition-colors shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }

@@ -1,14 +1,17 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
 import { authService, User } from '../api/services';
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
-type UserRole = 'buyer' | 'farmer' | 'admin' | null;
+type UserRole = 'buyer' | 'farmer' | null;
 type FarmerCategory = 'agriculture' | 'aquaculture' | 'dairy' | 'poultry' | null;
 
 interface AuthContextType {
   user: User | null;
   login: (data: any) => Promise<void>;
-  signup: (data: any) => Promise<void>;
+  signup: (data: any) => Promise<any>;
   logout: () => void;
+  switchRole: (newRole: 'buyer' | 'farmer') => void;
   setPendingRole: (role: UserRole, category?: FarmerCategory) => void;
   pendingRole: {
     role: UserRole;
@@ -19,7 +22,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: {children: React.ReactNode;}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingRole, setPendingRoleState] = useState<{
@@ -27,29 +30,40 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
     category?: FarmerCategory;
   } | null>(null);
 
+  // Listen to Firebase Auth state changes for session persistence
   useEffect(() => {
-    // Attempt to load user profile if token exists
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      authService.getProfile()
-        .then(userData => setUser(userData))
-        .catch(() => {
-          localStorage.removeItem('auth_token');
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const profile = await authService.getProfile();
+          setUser(profile);
+        } catch {
           setUser(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
+        }
+      } else {
+        // Firebase says no user is signed in
+        setUser(null);
+        localStorage.removeItem('auth_token');
+      }
       setIsLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (data: any) => {
     try {
       const response = await authService.login(data);
       localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('mock_role', response.user.role || 'farmer');
+      localStorage.setItem('mock_user_id', response.user.id);
+      localStorage.setItem('mock_user_name', response.user.name);
+      if (response.user.category) {
+        localStorage.setItem('mock_category', response.user.category);
+      }
       setUser(response.user);
     } catch (error) {
-      console.error("Login failed", error);
+      console.error('Login failed', error);
       throw error;
     }
   };
@@ -57,24 +71,50 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
   const signup = async (data: any) => {
     try {
       const response = await authService.signup(data);
-      localStorage.setItem('auth_token', response.token);
-      setUser(response.user);
+      // DO NOT set auth_token or user state here!
+      // Registration creates the Firebase account but signs out immediately.
+      // The user must log in manually.
+      return response;
     } catch (error) {
-      console.error("Signup failed", error);
+      console.error('Signup failed', error);
       throw error;
     }
   };
 
   const logout = () => {
+    // Sign out from Firebase Auth
+    authService.logout();
+    // Clear all local state
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('mock_role');
+    localStorage.removeItem('mock_user_id');
+    localStorage.removeItem('mock_user_name');
+    localStorage.removeItem('mock_category');
+    localStorage.removeItem('mock_user_email');
+    localStorage.removeItem('mock_user_mobile');
+    localStorage.removeItem('mock_user_state');
+    localStorage.removeItem('mock_user_city');
     setUser(null);
+    setPendingRoleState(null);
+  };
+
+  const switchRole = (newRole: 'buyer' | 'farmer') => {
+    localStorage.setItem('mock_role', newRole);
+    setPendingRoleState({ role: newRole });
+    if (user) {
+      const updatedUser: User = { ...user, role: newRole };
+      setUser(updatedUser);
+    }
   };
 
   const setPendingRole = (role: UserRole, category?: FarmerCategory) => {
     setPendingRoleState({
       role,
-      category
+      category,
     });
+    if (role) {
+      localStorage.setItem('mock_role', role);
+    }
   };
 
   return (
@@ -84,11 +124,12 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
         login,
         signup,
         logout,
+        switchRole,
         pendingRole,
         setPendingRole,
-        isLoading
-      }}>
-      
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

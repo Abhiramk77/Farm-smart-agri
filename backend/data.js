@@ -1,11 +1,5 @@
 export const INITIAL_USERS = [
   {
-    id: 'u1',
-    name: 'Admin User',
-    email: 'admin@farming.com',
-    role: 'admin',
-  },
-  {
     id: 'u2',
     name: 'John Farmer',
     email: 'farmer@farming.com',

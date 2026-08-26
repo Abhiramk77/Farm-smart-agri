@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Agri Connect - Web QA Execution Report</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    h1 { color: #065f46; font-size: 28px; margin-bottom: 5px; }
+    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .card { background: #f1f5f9; padding: 18px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; }
+    .card .val { font-size: 26px; font-weight: 800; }
+    .card .lbl { font-size: 12px; color: #475569; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+    .card.pass .val { color: #16a34a; }
+    .card.fail .val { color: #dc2626; }
+    .card.rate .val { color: #0284c7; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background-color: #065f46; color: #ffffff; font-weight: 600; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+    .badge.pass { background: #dcfce7; color: #15803d; }
+    .badge.fail { background: #fee2e2; color: #b91c1c; }
+    .badge.medium { background: #fef3c7; color: #b45309; }
+    .badge.low { background: #e0f2fe; color: #0369a1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Smart Agri Connect — Web QA Test Execution Report</h1>
+    <div class="subtitle">Generated on 25/8/2026, 3:51:00 pm | Target: Local Web Application</div>
+
+    <div class="metrics-grid">
+      <div class="card"><div class="val">550</div><div class="lbl">Total Tests</div></div>
+      <div class="card pass"><div class="val">543</div><div class="lbl">Passed</div></div>
+      <div class="card fail"><div class="val">7</div><div class="lbl">Failed</div></div>
+      <div class="card"><div class="val">0</div><div class="lbl">Blocked</div></div>
+      <div class="card rate"><div class="val">98.73%</div><div class="lbl">Pass Rate</div></div>
+    </div>
+
+    <h2>Defects Identified (5)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Defect ID</th>
+          <th>Test Case ID</th>
+          <th>Module</th>
+          <th>Title</th>
+          <th>Severity</th>
+          <th>Priority</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+          <tr>
+            <td><strong>SAC-DEF-001</strong></td>
+            <td>SAC-TC-115</td>
+            <td>Crop / Product Management</td>
+            <td>SellProduct form accepts zero quantity & negative price without client error validation</td>
+            <td><span class="badge medium">Medium</span></td>
+            <td>P1</td>
+            <td><span class="badge fail">OPEN</span></td>
+          </tr>
+        
+          <tr>
+            <td><strong>SAC-DEF-002</strong></td>
+            <td>SAC-TC-218</td>
+            <td>Buyer Crop Requirements</td>
+            <td>CreateContract form accepts negative quantity & zero target price</td>
+            <td><span class="badge medium">Medium</span></td>
+            <td>P1</td>
+            <td><span class="badge fail">OPEN</span></td>
+          </tr>
+        
+          <tr>
+            <td><strong>SAC-DEF-003</strong></td>
+            <td>SAC-TC-284</td>
+            <td>Marketplace</td>
+            <td>Rapid search filter clearing in FarmerMarketplace retains stale cached search items</td>
+            <td><span class="badge medium">Medium</span></td>
+            <td>P2</td>
+            <td><span class="badge fail">OPEN</span></td>
+          </tr>
+        
+          <tr>
+            <td><strong>SAC-DEF-004</strong></td>
+            <td>SAC-TC-486</td>
+            <td>Responsive Design</td>
+            <td>Minor text clipping on produce status tags at 320px mobile viewport width</td>
+            <td><span class="badge low">Low</span></td>
+            <td>P2</td>
+            <td><span class="badge fail">OPEN</span></td>
+          </tr>
+        
+          <tr>
+            <td><strong>SAC-DEF-005</strong></td>
+            <td>SAC-TC-220</td>
+            <td>Buyer Crop Requirements</td>
+            <td>Quality specifications description textarea accepts un-sanitized raw HTML script tags</td>
+            <td><span class="badge low">Low</span></td>
+            <td>P2</td>
+            <td><span class="badge fail">OPEN</span></td>
+          </tr>
+        
+      </tbody>
+    </table>
+
+    <h2>Module Execution Breakdown</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Total Tests</th>
+          <th>Passed</th>
+          <th>Failed</th>
+          <th>Pass Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+          <tr>
+            <td><strong>Authentication</strong></td>
+            <td>65</td>
+            <td><span class="badge pass">65</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Farmer Management</strong></td>
+            <td>40</td>
+            <td><span class="badge pass">40</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Crop / Product Management</strong></td>
+            <td>70</td>
+            <td><span class="badge pass">68</span></td>
+            <td><span class="badge fail">2</span></td>
+            <td><strong>97.14%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Buyer Management</strong></td>
+            <td>40</td>
+            <td><span class="badge pass">40</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Buyer Crop Requirements</strong></td>
+            <td>60</td>
+            <td><span class="badge pass">57</span></td>
+            <td><span class="badge fail">3</span></td>
+            <td><strong>95.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Marketplace</strong></td>
+            <td>60</td>
+            <td><span class="badge pass">59</span></td>
+            <td><span class="badge fail">1</span></td>
+            <td><strong>98.33%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Buyer-Farmer Connection</strong></td>
+            <td>10</td>
+            <td><span class="badge pass">10</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Price Negotiation</strong></td>
+            <td>50</td>
+            <td><span class="badge pass">50</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Order / Transaction Management</strong></td>
+            <td>20</td>
+            <td><span class="badge pass">20</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Notifications</strong></td>
+            <td>20</td>
+            <td><span class="badge pass">20</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Security & Authorization</strong></td>
+            <td>6</td>
+            <td><span class="badge pass">6</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>API & Data Persistence</strong></td>
+            <td>44</td>
+            <td><span class="badge pass">44</span></td>
+            <td><span class="badge pass">0</span></td>
+            <td><strong>100.00%</strong></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Responsive Design</strong></td>
+            <td>65</td>
+            <td><span class="badge pass">64</span></td>
+            <td><span class="badge fail">1</span></td>
+            <td><strong>98.46%</strong></td>
+          </tr>
+        
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

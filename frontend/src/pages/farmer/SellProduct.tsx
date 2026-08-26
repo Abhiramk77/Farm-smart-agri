@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,9 +7,12 @@ import {
   CheckCircle2,
   MapPin,
   Loader2,
-  Truck
+  Truck,
+  Plus,
+  ImagePlus
 } from 'lucide-react';
 import { ROLES, CATEGORIES } from '../../data/mockData';
+import { LocationMap } from '../../components/LocationMap';
 
 export function SellProduct() {
   const navigate = useNavigate();
@@ -17,6 +20,7 @@ export function SellProduct() {
   const [formData, setFormData] = useState({
     category: '',
     product: '',
+    customImage: '',
     quantity: '',
     quality: 'Standard',
     price: '',
@@ -25,6 +29,8 @@ export function SellProduct() {
     farmerDelivers: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingNewProduct, setIsAddingNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
 
   const updateForm = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -41,10 +47,14 @@ export function SellProduct() {
     
     // Simulate network request and save to localStorage
     setTimeout(() => {
+      const categoryProducts = CATEGORIES[formData.category as keyof typeof CATEGORIES] || [];
+      const productObj = categoryProducts.find(p => p.name === formData.product);
+
       const existingListings = JSON.parse(localStorage.getItem('farmer_listings') || '[]');
       const newListing = {
         id: `lst-${Date.now()}`,
         ...formData,
+        productImage: formData.customImage || productObj?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.product)}&background=2D6A4F&color=fff&size=400`,
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('farmer_listings', JSON.stringify([newListing, ...existingListings]));
@@ -136,31 +146,113 @@ export function SellProduct() {
               exit={{ opacity: 0, x: -20 }}
             >
               <h2 className="text-xl font-bold mb-6">Select Specific Product</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {(CATEGORIES[formData.category as keyof typeof CATEGORIES] || []).map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => {
-                      updateForm('product', product.name);
-                      nextStep();
-                    }}
-                    className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${formData.product === product.name ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-gray-200'}`}
-                  >
-                    <div className="aspect-square relative">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-end p-3">
-                        <span className="text-white font-medium">
-                          {product.name}
-                        </span>
+              
+              {!isAddingNewProduct ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {(CATEGORIES[formData.category as keyof typeof CATEGORIES] || []).map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => {
+                        updateForm('product', product.name);
+                        nextStep();
+                      }}
+                      className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${formData.product === product.name ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-gray-200'}`}
+                    >
+                      <div className="aspect-square relative">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-end p-3">
+                          <span className="text-white font-medium">
+                            {product.name}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                  <div
+                    onClick={() => setIsAddingNewProduct(true)}
+                    className="cursor-pointer rounded-xl overflow-hidden border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center bg-gray-50 aspect-square p-4"
+                  >
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
+                      <Plus size={24} className="text-primary" />
+                    </div>
+                    <span className="text-gray-700 font-medium text-center">Upload New Product</span>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Upload New Product</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Organic Quinoa"
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Image (Optional)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      {formData.customImage ? (
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+                          <img src={formData.customImage} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
+                          <ImagePlus size={24} />
+                        </div>
+                      )}
+                      <label className="cursor-pointer px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        Choose Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = URL.createObjectURL(file);
+                              updateForm('customImage', url);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        if (newProductName.trim()) {
+                          updateForm('product', newProductName.trim());
+                          setIsAddingNewProduct(false);
+                          nextStep();
+                        }
+                      }}
+                      className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-medium transition-colors shadow-sm"
+                    >
+                      Save & Continue
+                    </button>
+                    <button
+                      onClick={() => setIsAddingNewProduct(false)}
+                      className="px-6 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 rounded-xl font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -241,7 +333,13 @@ export function SellProduct() {
                       placeholder="Enter full address"
                       value={formData.farmLocation}
                       onChange={(e) => updateForm('farmLocation', e.target.value)}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary mb-2"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary mb-3"
+                    />
+                    <LocationMap
+                      mode="select"
+                      location={formData.farmLocation || 'Green Acres Farm, IL'}
+                      onChange={(loc) => updateForm('farmLocation', loc)}
+                      height="220px"
                     />
                   </div>
 

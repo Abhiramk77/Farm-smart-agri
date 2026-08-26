@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -7,7 +6,7 @@ void main() {
 
 // ─── DATA MODELS ───────────────────────────────────────────────────────────────
 
-enum UserRole { farmer, buyer, admin }
+enum UserRole { farmer, buyer }
 enum FarmerCategory { agriculture, aquaculture, dairy, poultry }
 enum ContractStatus { pending, active, completed, rejected }
 enum ContractProgress { planting, growing, harvesting, ready, delivered }
@@ -96,22 +95,6 @@ class Contract {
   }
 }
 
-class ChatThread {
-  final String id;
-  final String name;
-  final String lastMessage;
-  final String time;
-  final int unread;
-
-  ChatThread({
-    required this.id,
-    required this.name,
-    required this.lastMessage,
-    required this.time,
-    required this.unread,
-  });
-}
-
 // ─── MOCK DATA STORE ────────────────────────────────────────────────────────────
 
 class MockStore extends ChangeNotifier {
@@ -179,26 +162,7 @@ class MockStore extends ChangeNotifier {
     ),
   ];
 
-  List<Contract> get contracts => _contracts;
-
-  List<ChatThread> get chats => [
-        ChatThread(
-          id: 'chat1',
-          name: 'Fresh Foods Co.',
-          lastMessage: 'Is the price negotiable?',
-          time: '10:30 AM',
-          unread: 2,
-        ),
-        ChatThread(
-          id: 'chat2',
-          name: 'Green Valley Dairy',
-          lastMessage: 'We will dispatch the truck tomorrow morning.',
-          time: 'Yesterday',
-          unread: 0,
-        ),
-      ];
-
-  void login(User u) {
+  List<Contract> get contracts => _contracts;  void login(User u) {
     _user = u;
     notifyListeners();
   }
@@ -284,8 +248,6 @@ class SmartAgriApp extends StatelessWidget {
         return const FarmerShell();
       case UserRole.buyer:
         return const BuyerShell();
-      case UserRole.admin:
-        return const AdminDashboardPage();
     }
   }
 }
@@ -405,7 +367,7 @@ class _LandingPageState extends State<LandingPage> {
                             : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -418,7 +380,7 @@ class _LandingPageState extends State<LandingPage> {
                           children: [
                             Image.network(role.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                                errorBuilder: (_, _, _) => Container(
                                     color: Colors.grey[300],
                                     child: const Icon(Icons.image))),
                             Container(
@@ -428,7 +390,7 @@ class _LandingPageState extends State<LandingPage> {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    Colors.black.withOpacity(0.8),
+                                    Colors.black.withValues(alpha: 0.8),
                                   ],
                                   stops: const [0.5, 1.0],
                                 ),
@@ -734,7 +696,7 @@ class _LoginPageState extends State<LoginPage> {
                             boxShadow: selected
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 4,
                                     )
                                   ]
@@ -833,7 +795,6 @@ class _FarmerShellState extends State<FarmerShell> {
   final _pages = const [
     FarmerDashboardPage(),
     MarketplacePage(),
-    ChatPage(),
   ];
 
   @override
@@ -852,10 +813,6 @@ class _FarmerShellState extends State<FarmerShell> {
               icon: Icon(Icons.store_outlined),
               selectedIcon: Icon(Icons.store),
               label: 'Marketplace'),
-          NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble),
-              label: 'Chat'),
         ],
       ),
     );
@@ -875,7 +832,6 @@ class _BuyerShellState extends State<BuyerShell> {
 
   final _pages = const [
     BuyerDashboardPage(),
-    ChatPage(),
   ];
 
   @override
@@ -890,10 +846,6 @@ class _BuyerShellState extends State<BuyerShell> {
               icon: Icon(Icons.dashboard_outlined),
               selectedIcon: Icon(Icons.dashboard),
               label: 'Dashboard'),
-          NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble),
-              label: 'Chat'),
         ],
       ),
     );
@@ -985,8 +937,7 @@ class FarmerDashboardPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 ...mockStore.contracts
                     .where((c) => c.status == ContractStatus.pending)
-                    .map((c) => _ContractCard(contract: c, isFarmer: true))
-                    .toList(),
+                    .map((c) => _ContractCard(contract: c, isFarmer: true)),
 
                 const SizedBox(height: 20),
                 const Text('Active Contracts',
@@ -998,8 +949,7 @@ class FarmerDashboardPage extends StatelessWidget {
                       message: 'No active contracts yet.',
                       icon: Icons.assignment_outlined),
                 ...contracts
-                    .map((c) => _ContractCard(contract: c, isFarmer: true))
-                    .toList(),
+                    .map((c) => _ContractCard(contract: c, isFarmer: true)),
               ],
             ),
           ))),
@@ -1107,7 +1057,7 @@ class BuyerDashboardPage extends StatelessWidget {
                                 style: TextStyle(
                                     fontSize: 11,
                                     color: (s['textColor'] as Color)
-                                        .withOpacity(0.8))),
+                                        .withValues(alpha: 0.8))),
                           ],
                         ),
                       ),
@@ -1125,8 +1075,7 @@ class BuyerDashboardPage extends StatelessWidget {
                       message: 'No contracts yet.',
                       icon: Icons.assignment_outlined),
                 ...contracts
-                    .map((c) => _ContractCard(contract: c, isFarmer: false))
-                    .toList(),
+                    .map((c) => _ContractCard(contract: c, isFarmer: false)),
               ],
             ),
           ))),
@@ -1217,7 +1166,7 @@ class _ContractCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.07),
+                color: Colors.black.withValues(alpha: 0.07),
                 blurRadius: 8,
                 offset: const Offset(0, 3))
           ],
@@ -1232,7 +1181,7 @@ class _ContractCard extends StatelessWidget {
                 width: double.infinity,
                 child: Image.network(contract.productImage,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                         color: Colors.grey[200],
                         child: const Icon(Icons.image, size: 40))),
               ),
@@ -1254,7 +1203,7 @@ class _ContractCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _statusColor(contract.status).withOpacity(0.1),
+                          color: _statusColor(contract.status).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1415,7 +1364,7 @@ class ContractDetailPage extends StatelessWidget {
                   width: double.infinity,
                   child: Image.network(liveContract.productImage,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                           color: Colors.grey[200],
                           child: const Icon(Icons.image, size: 60))),
                 ),
@@ -1645,7 +1594,7 @@ class _DetailCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2))
         ],
@@ -1765,7 +1714,7 @@ class _CreateContractPageState extends State<CreateContractPage> {
             const Text('Category'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               items: ['agriculture', 'aquaculture', 'dairy', 'poultry']
                   .map((c) => DropdownMenuItem(
                       value: c,
@@ -1791,7 +1740,7 @@ class _CreateContractPageState extends State<CreateContractPage> {
               Switch(
                 value: _transportIncluded,
                 onChanged: (v) => setState(() => _transportIncluded = v),
-                activeColor: kPrimary,
+                activeThumbColor: kPrimary,
               ),
               const Text('Transport Included'),
             ]),
@@ -1897,7 +1846,7 @@ class _SellProductPageState extends State<SellProductPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               items: ['agriculture', 'aquaculture', 'dairy', 'poultry']
                   .map((c) => DropdownMenuItem(
                       value: c,
@@ -1949,312 +1898,6 @@ class _SellProductPageState extends State<SellProductPage> {
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300)),
-    );
-  }
-}
-
-// ─── CHAT PAGE ───────────────────────────────────────────────────────────────────
-
-class ChatPage extends StatelessWidget {
-  const ChatPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final chats = mockStore.chats;
-    return Scaffold(
-      backgroundColor: kBackground,
-      appBar: buildAppBar('Messages', context),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: chats.length,
-        itemBuilder: (ctx, i) {
-          final chat = chats[i];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2))
-              ],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 8),
-              leading: CircleAvatar(
-                backgroundColor: kPrimaryLight,
-                child: Text(
-                  chat.name[0].toUpperCase(),
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              title: Text(chat.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(chat.lastMessage,
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(chat.time,
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.grey)),
-                  if (chat.unread > 0) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                          color: kPrimary, shape: BoxShape.circle),
-                      child: Center(
-                        child: Text('${chat.unread}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 11)),
-                      ),
-                    ),
-                  ]
-                ],
-              ),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(
-                      builder: (_) => ChatThreadPage(thread: chat))),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class ChatThreadPage extends StatefulWidget {
-  final ChatThread thread;
-  const ChatThreadPage({super.key, required this.thread});
-  @override
-  State<ChatThreadPage> createState() => _ChatThreadPageState();
-}
-
-class _ChatThreadPageState extends State<ChatThreadPage> {
-  final _ctrl = TextEditingController();
-  final List<Map<String, String>> _messages = [
-    {'sender': 'other', 'text': 'Hello! Interested in your produce.'},
-    {'sender': 'me', 'text': 'Sure, what would you like to know?'},
-  ];
-
-  void _send() {
-    if (_ctrl.text.trim().isEmpty) return;
-    setState(() {
-      _messages.add({'sender': 'me', 'text': _ctrl.text.trim()});
-      _ctrl.clear();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: Text(widget.thread.name,
-            style: const TextStyle(
-                color: Colors.black87, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.black87),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (ctx, i) {
-                final msg = _messages[i];
-                final isMe = msg['sender'] == 'me';
-                return Align(
-                  alignment:
-                      isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isMe ? kPrimary : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.07),
-                            blurRadius: 4)
-                      ],
-                    ),
-                    child: Text(
-                      msg['text']!,
-                      style: TextStyle(
-                          color: isMe ? Colors.white : Colors.black87),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ctrl,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      filled: true,
-                      fillColor: kBackground,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _send,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                        color: kPrimary, shape: BoxShape.circle),
-                    child: const Icon(Icons.send, color: Colors.white, size: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── ADMIN DASHBOARD ────────────────────────────────────────────────────────────
-
-class AdminDashboardPage extends StatelessWidget {
-  const AdminDashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: mockStore,
-      builder: (context, _) {
-        final contracts = mockStore.contracts;
-        return Scaffold(
-          backgroundColor: kBackground,
-          appBar: buildAppBar('Admin Dashboard', context),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Platform Overview',
-                    style: TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.4,
-                  children: [
-                    _AdminStatCard(
-                        'Total Contracts',
-                        contracts.length.toString(),
-                        Icons.description,
-                        Colors.blue),
-                    _AdminStatCard(
-                        'Active',
-                        contracts
-                            .where((c) => c.status == ContractStatus.active)
-                            .length
-                            .toString(),
-                        Icons.check_circle,
-                        Colors.green),
-                    _AdminStatCard(
-                        'Pending',
-                        contracts
-                            .where((c) => c.status == ContractStatus.pending)
-                            .length
-                            .toString(),
-                        Icons.access_time,
-                        Colors.orange),
-                    _AdminStatCard(
-                        'Completed',
-                        contracts
-                            .where(
-                                (c) => c.status == ContractStatus.completed)
-                            .length
-                            .toString(),
-                        Icons.done_all,
-                        Colors.purple),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Text('All Contracts',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 10),
-                ...contracts
-                    .map((c) => _ContractCard(contract: c, isFarmer: false))
-                    .toList(),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _AdminStatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _AdminStatCard(this.label, this.value, this.icon, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 28),
-          const Spacer(),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: color)),
-          Text(label,
-              style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
-      ),
     );
   }
 }

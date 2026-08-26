@@ -1,23 +1,28 @@
+import agricultureImg from '../assets/images/agriculture.png';
+import aquacultureImg from '../assets/images/aquaculture.png';
+import dairyImg from '../assets/images/dairy.png';
+import poultryImg from '../assets/images/poultry.png';
+
 export const ROLES = [
 {
   id: 'agriculture',
   name: 'Agriculture Farmer',
-  image: '/Farm-smart-agri/images/agriculture.png'
+  image: agricultureImg
 },
 {
   id: 'aquaculture',
   name: 'Aquaculture Farmer',
-  image: '/Farm-smart-agri/images/aquaculture.png'
+  image: aquacultureImg
 },
 {
   id: 'dairy',
   name: 'Dairy Farmer',
-  image: '/Farm-smart-agri/images/dairy.png'
+  image: dairyImg
 },
 {
   id: 'poultry',
   name: 'Poultry Farmer',
-  image: '/Farm-smart-agri/images/poultry.png'
+  image: poultryImg
 },
 {
   id: 'buyer',
@@ -160,26 +165,6 @@ export const MOCK_CONTRACTS = [
   createdAt: '2023-10-10T09:15:00Z'
 }];
 
-
-export const MOCK_CHATS = [
-{
-  id: 'chat1',
-  name: 'Fresh Foods Co.',
-  avatar:
-  'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200',
-  lastMessage: 'Is the price negotiable?',
-  time: '10:30 AM',
-  unread: 2
-},
-{
-  id: 'chat2',
-  name: 'Green Valley Dairy',
-  avatar:
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200',
-  lastMessage: 'We will dispatch the truck tomorrow morning.',
-  time: 'Yesterday',
-  unread: 0
-}];
 
 export const MOCK_NOTIFICATIONS = [
   {

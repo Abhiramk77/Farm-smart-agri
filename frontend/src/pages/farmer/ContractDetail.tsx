@@ -7,9 +7,10 @@ import {
   Truck,
   ShieldCheck,
   MessageSquare,
-  Loader2 } from
-'lucide-react';
-import { contractService, Contract } from '../../api/services';
+  Loader2,
+} from 'lucide-react';
+import { contractService, Contract, sanitizeContract } from '../../api/services';
+import { LocationMap } from '../../components/LocationMap';
 
 export function FarmerContractDetail() {
   const { id } = useParams();
@@ -25,25 +26,39 @@ export function FarmerContractDetail() {
     if (!contract) return;
     setIsSubmitting(true);
     try {
-      await contractService.acceptContract(contract.id);
+      const accepted = await contractService.acceptContract(contract.id);
 
       const userId = localStorage.getItem('mock_user_id') || 'unknown';
 
       // Save the contract ID to the accepted list
       const idsKey = `accepted_contracts_${userId}`;
-      const existingIds: string[] = JSON.parse(localStorage.getItem(idsKey) || '[]');
+      const existingIds: string[] = JSON.parse(
+        localStorage.getItem(idsKey) || '[]'
+      );
       if (!existingIds.includes(contract.id)) {
-        localStorage.setItem(idsKey, JSON.stringify([...existingIds, contract.id]));
+        localStorage.setItem(
+          idsKey,
+          JSON.stringify([...existingIds, contract.id])
+        );
       }
 
       // ✅ Also cache the full contract object so earnings show after re-login
       const cacheKey = `cached_contracts_${userId}`;
-      const cachedContracts: any[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
-      const alreadyCached = cachedContracts.some(c => c.id === contract.id);
+      const cachedContracts: any[] = JSON.parse(
+        localStorage.getItem(cacheKey) || '[]'
+      );
+      const alreadyCached = cachedContracts.some((c) => c.id === contract.id);
       if (!alreadyCached) {
-        // Mark as active so dashboard shows it correctly
-        const activeContract = { ...contract, status: 'active', progress: 'planting' };
-        localStorage.setItem(cacheKey, JSON.stringify([...cachedContracts, activeContract]));
+        const activeContract = sanitizeContract({
+          ...contract,
+          ...accepted,
+          status: 'active',
+          progress: 'planting',
+        });
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify([...cachedContracts, activeContract])
+        );
       }
 
       navigate('/farmer/dashboard');
@@ -55,7 +70,6 @@ export function FarmerContractDetail() {
   };
 
   const handleRejectContract = async () => {
-
     if (!contract) return;
     setIsSubmitting(true);
     try {
@@ -69,22 +83,35 @@ export function FarmerContractDetail() {
   };
 
   const STAGES = ['planting', 'growing', 'harvesting', 'ready', 'delivered'];
-  
+
   const handleAdvanceProgress = async () => {
-    if (!contract || contract.status !== 'active' || !contract.progress) return;
-    
-    const currentIndex = STAGES.indexOf(contract.progress);
+    if (!contract || contract.status !== 'active') return;
+
+    const currentProgress = contract.progress || 'planting';
+    const currentIndex = STAGES.indexOf(currentProgress);
     if (currentIndex === -1 || currentIndex === STAGES.length - 1) return;
-    
+
     const nextStage = STAGES[currentIndex + 1];
-    
+
     setIsSubmitting(true);
     try {
-      const updated = await contractService.updateContractProgress(contract.id, nextStage);
-      setContract(updated);
+      const updated = await contractService.updateContractProgress(
+        contract.id,
+        nextStage
+      );
+      setContract((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...sanitizeContract(updated),
+              progress: nextStage as any,
+              status: nextStage === 'delivered' ? 'completed' : prev.status,
+            }
+          : prev
+      );
     } catch (err) {
       console.error(err);
-      alert('Failed to update progress');
+      alert('Failed to update progress. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -92,15 +119,15 @@ export function FarmerContractDetail() {
 
   const handleSendNegotiation = () => {
     if (!negotiatePrice) return;
-    // In a real app, this would send a message to the backend via an API
     navigate('/chat');
   };
 
   useEffect(() => {
     if (!id) return;
-    contractService.getContractById(id)
-      .then(data => setContract(data))
-      .catch(err => {
+    contractService
+      .getContractById(id)
+      .then((data) => setContract(sanitizeContract(data)))
+      .catch((err) => {
         console.error('Failed to fetch contract details', err);
         setError('Could not load contract details. Please try again later.');
       })
@@ -121,15 +148,19 @@ export function FarmerContractDetail() {
         <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100">
           <p className="font-bold mb-2">Error</p>
           <p>{error || 'Contract not found.'}</p>
-          <button 
-            onClick={() => navigate(-1)} 
-            className="mt-4 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-xl hover:bg-red-50">
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-xl hover:bg-red-50"
+          >
             Go Back
           </button>
         </div>
       </div>
     );
   }
+
+  const displayTotalPrice = contract.totalPrice?.replace(/\$/g, '₹');
+  const displayUnitPrice = contract.price?.replace(/\$/g, '₹');
 
   return (
     <div className="pb-24 md:pb-8">
@@ -138,13 +169,14 @@ export function FarmerContractDetail() {
         <img
           src={contract.productImage}
           alt={contract.product}
-          className="w-full h-full object-cover" />
-        
+          className="w-full h-full object-cover"
+        />
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 md:top-8 md:left-8 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors">
-          
+          className="absolute top-4 left-4 md:top-8 md:left-8 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-colors"
+        >
           <ArrowLeft size={20} />
         </button>
         <div className="absolute bottom-6 left-4 md:left-8 right-4 md:right-8 flex justify-between items-end">
@@ -161,9 +193,9 @@ export function FarmerContractDetail() {
           </div>
           <div className="text-right text-white">
             <p className="text-3xl md:text-4xl font-bold text-accent">
-              {contract.totalPrice}
+              {displayTotalPrice}
             </p>
-            <p className="text-white/80">{contract.price}</p>
+            <p className="text-white/80">{displayUnitPrice}</p>
           </div>
         </div>
       </div>
@@ -185,9 +217,9 @@ export function FarmerContractDetail() {
                 <p className="text-sm text-gray-500 mb-1">Transport</p>
                 <div className="flex items-center gap-2 font-medium">
                   <Truck size={18} className="text-primary" />
-                  {contract.transportIncluded ?
-                  'Farmer Delivers' :
-                  'Buyer Pickup'}
+                  {contract.transportIncluded
+                    ? 'Farmer Delivers'
+                    : 'Buyer Pickup'}
                 </div>
               </div>
             </div>
@@ -206,19 +238,13 @@ export function FarmerContractDetail() {
                 </p>
               </div>
             </div>
-            {/* Mock Map */}
-            <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800"
-                alt="Map Route"
-                className="w-full h-full object-cover" />
-              
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-bold text-primary">
-                  Route Preview
-                </div>
-              </div>
-            </div>
+            {/* Interactive Location Map */}
+            <LocationMap
+              mode="view"
+              location={contract.deliveryLocation}
+              origin="Your Farm"
+              height="260px"
+            />
           </section>
         </div>
 
@@ -229,8 +255,8 @@ export function FarmerContractDetail() {
               <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
                 <img
                   src={`https://ui-avatars.com/api/?name=${contract.buyerName}&background=random`}
-                  alt="Buyer" />
-                
+                  alt="Buyer"
+                />
               </div>
               <div>
                 <p className="font-bold text-gray-900">{contract.buyerName}</p>
@@ -244,67 +270,94 @@ export function FarmerContractDetail() {
             <div className="space-y-3">
               {contract.status === 'pending' ? (
                 <>
-                  <button 
+                  <button
                     onClick={handleAcceptContract}
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : 'Accept Contract'}
+                    className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      'Accept Contract'
+                    )}
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={handleRejectContract}
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-white text-red-600 font-bold rounded-xl border border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                    className="w-full py-4 bg-white text-red-600 font-bold rounded-xl border border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  >
                     Reject Contract
                   </button>
 
-                  {showNegotiate ?
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-2">
+                  {showNegotiate ? (
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Your Counter Offer
                       </label>
                       <div className="flex gap-2">
                         <input
-                        type="text"
-                        value={negotiatePrice}
-                        onChange={(e) => setNegotiatePrice(e.target.value)}
-                        placeholder="₹"
-                        className="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-primary" />
-                      
-                        <button 
+                          type="text"
+                          value={negotiatePrice}
+                          onChange={(e) => setNegotiatePrice(e.target.value)}
+                          placeholder="₹"
+                          className="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-primary"
+                        />
+
+                        <button
                           onClick={handleSendNegotiation}
-                          className="px-4 bg-secondary text-white rounded-lg font-medium">
+                          className="px-4 bg-secondary text-white rounded-lg font-medium"
+                        >
                           Send
                         </button>
                       </div>
-                    </div> :
-
-                  <button
-                    onClick={() => setShowNegotiate(true)}
-                    className="w-full py-3 bg-secondary/10 text-secondary font-bold rounded-xl hover:bg-secondary/20 transition-colors">
-                    
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowNegotiate(true)}
+                      className="w-full py-3 bg-secondary/10 text-secondary font-bold rounded-xl hover:bg-secondary/20 transition-colors"
+                    >
                       Negotiate Price
                     </button>
-                  }
+                  )}
                 </>
               ) : contract.status === 'active' ? (
                 <div className="pt-2 border-t border-gray-100">
-                  <h3 className="font-bold text-gray-900 mb-4">Update Progress</h3>
-                  
+                  <h3 className="font-bold text-gray-900 mb-4">
+                    Update Progress
+                  </h3>
+
                   <div className="space-y-4 mb-6 relative">
                     <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-gray-200" />
-                    
+
                     {STAGES.map((stage, idx) => {
-                      const currentIdx = STAGES.indexOf(contract.progress || 'planting');
+                      const currentIdx = STAGES.indexOf(
+                        contract.progress || 'planting'
+                      );
                       const isCompleted = idx <= currentIdx;
                       const isCurrent = idx === currentIdx;
-                      
+
                       return (
-                        <div key={stage} className={`flex items-center gap-3 relative ${isCompleted ? 'text-primary' : 'text-gray-400'}`}>
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-10 ${isCompleted ? 'bg-primary text-white' : 'bg-gray-200 text-gray-400'}`}>
+                        <div
+                          key={stage}
+                          className={`flex items-center gap-3 relative ${
+                            isCompleted ? 'text-primary' : 'text-gray-400'
+                          }`}
+                        >
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-10 ${
+                              isCompleted
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-200 text-gray-400'
+                            }`}
+                          >
                             {idx + 1}
                           </div>
-                          <span className={`font-medium capitalize ${isCurrent ? 'text-primary font-bold' : ''}`}>
+                          <span
+                            className={`font-medium capitalize ${
+                              isCurrent ? 'text-primary font-bold' : ''
+                            }`}
+                          >
                             {stage}
                           </span>
                         </div>
@@ -312,11 +365,20 @@ export function FarmerContractDetail() {
                     })}
                   </div>
 
-                  <button 
+                  <button
                     onClick={handleAdvanceProgress}
-                    disabled={isSubmitting || contract.progress === 'delivered'}
-                    className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : (contract.progress === 'delivered' ? 'Contract Completed' : 'Advance to Next Stage')}
+                    disabled={
+                      isSubmitting || contract.progress === 'delivered'
+                    }
+                    className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="animate-spin" />
+                    ) : contract.progress === 'delivered' ? (
+                      'Contract Completed'
+                    ) : (
+                      'Advance to Next Stage'
+                    )}
                   </button>
                 </div>
               ) : (
@@ -325,13 +387,7 @@ export function FarmerContractDetail() {
                 </div>
               )}
 
-              <button
-                onClick={() => navigate('/chat')}
-                className="w-full py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 mt-4">
-                
-                <MessageSquare size={18} /> Message Buyer
-              </button>
-            </div>
+                          </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Star, Loader2, Wheat, Droplets, Fish, Bird } from 'lucide-react';
-import { contractService, Contract } from '../../api/services';
+import { contractService, Contract, sanitizeContract } from '../../api/services';
 
 const CATEGORY_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   agriculture: { label: 'Agriculture', color: 'bg-green-100 text-green-800',  icon: <Wheat size={14} /> },
@@ -23,10 +23,24 @@ export function FarmerMarketplace() {
   useEffect(() => {
     contractService.getMarketplace()
       .then(data => {
-        // ✅ Only show contracts that match this farmer's category
+        const sanitized = (data || []).map(sanitizeContract);
+        const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]').map(sanitizeContract);
+
+        const seenKeys = new Set<string>();
+        const combined: Contract[] = [];
+
+        [...customPending, ...sanitized].forEach(c => {
+          const sig = `${c.category}_${(c.product || '').toLowerCase()}_${c.quantity}_${c.price}`;
+          if (!seenKeys.has(c.id) && !seenKeys.has(sig)) {
+            seenKeys.add(c.id);
+            seenKeys.add(sig);
+            combined.push(c);
+          }
+        });
+
         const filtered = farmerCategory
-          ? data.filter(c => c.category === farmerCategory)
-          : data;
+          ? combined.filter(c => c.category === farmerCategory)
+          : combined;
         setContracts(filtered);
       })
       .catch(err => {
@@ -88,6 +102,8 @@ export function FarmerMarketplace() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {contracts.map((contract) => {
           const meta = CATEGORY_META[contract.category];
+          const displayTotalPrice = contract.totalPrice?.replace(/\$/g, '₹');
+          const displayUnitPrice = contract.price?.replace(/\$/g, '₹');
           return (
             <div
               key={contract.id}
@@ -124,8 +140,8 @@ export function FarmerMarketplace() {
                     <p className="text-sm text-gray-500">{contract.quantity} • {contract.quality}</p>
                   </div>
                   <div className="text-right shrink-0 ml-2">
-                    <p className="text-lg font-bold text-primary">{contract.totalPrice}</p>
-                    <p className="text-xs text-gray-500">{contract.price}</p>
+                    <p className="text-lg font-bold text-primary">{displayTotalPrice}</p>
+                    <p className="text-xs text-gray-500">{displayUnitPrice}</p>
                   </div>
                 </div>
 

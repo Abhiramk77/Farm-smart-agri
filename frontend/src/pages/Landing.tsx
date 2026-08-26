@@ -4,21 +4,56 @@ import { motion } from 'framer-motion';
 import { ROLES } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { CheckCircle2, Leaf } from 'lucide-react';
+
 export function Landing() {
   const navigate = useNavigate();
-  const { setPendingRole } = useAuth();
+  const { setPendingRole, user, logout } = useAuth();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+
+  const handleSelectRole = (roleId: string) => {
+    setSelectedRole(roleId);
+    const targetRole = roleId === 'buyer' ? 'buyer' : 'farmer';
+    if (roleId === 'buyer') {
+      setPendingRole('buyer');
+    } else {
+      setPendingRole('farmer', roleId as any);
+    }
+    // Clear legacy active user session if role is changed
+    if (user && user.role !== targetRole) {
+      logout();
+    }
+  };
+
   const handleContinue = () => {
     if (selectedRole) {
-      const roleObj = ROLES.find((r) => r.id === selectedRole);
+      const targetRole = selectedRole === 'buyer' ? 'buyer' : 'farmer';
       if (selectedRole === 'buyer') {
         setPendingRole('buyer');
       } else {
         setPendingRole('farmer', selectedRole as any);
       }
+      if (user && user.role !== targetRole) {
+        logout();
+      }
       navigate('/signup');
     }
   };
+
+  const handleLoginClick = () => {
+    if (selectedRole) {
+      const targetRole = selectedRole === 'buyer' ? 'buyer' : 'farmer';
+      if (selectedRole === 'buyer') {
+        setPendingRole('buyer');
+      } else {
+        setPendingRole('farmer', selectedRole as any);
+      }
+      if (user && user.role !== targetRole) {
+        logout();
+      }
+    }
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="p-6 flex justify-between items-center bg-white shadow-sm">
@@ -31,9 +66,9 @@ export function Landing() {
           </span>
         </div>
         <button
-          onClick={() => navigate('/login')}
-          className="text-primary font-medium hover:text-primary-dark">
-          
+          onClick={handleLoginClick}
+          className="text-primary font-medium hover:text-primary-dark"
+        >
           Login
         </button>
       </header>
@@ -55,33 +90,30 @@ export function Landing() {
             return (
               <motion.div
                 key={role.id}
-                initial={{
-                  opacity: 0,
-                  y: 20
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0
-                }}
-                transition={{
-                  delay: index * 0.1
-                }}
-                onClick={() => setSelectedRole(role.id)}
-                className={`relative cursor-pointer rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-200 group ${isSelected ? 'ring-4 ring-primary ring-offset-2 scale-[1.02]' : 'hover:shadow-md hover:-translate-y-1'}`}>
-                
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => handleSelectRole(role.id)}
+                className={`relative cursor-pointer rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-200 group ${
+                  isSelected
+                    ? 'ring-4 ring-primary ring-offset-2 scale-[1.02]'
+                    : 'hover:shadow-md hover:-translate-y-1'
+                }`}
+              >
                 <div className="aspect-[4/5] relative">
                   <img
                     src={role.image}
                     alt={role.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                  {isSelected &&
-                  <div className="absolute top-3 right-3 bg-white rounded-full text-primary">
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 bg-white rounded-full text-primary">
                       <CheckCircle2 size={24} className="fill-current" />
                     </div>
-                  }
+                  )}
 
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <h3 className="text-white font-semibold text-lg leading-tight">
@@ -89,8 +121,8 @@ export function Landing() {
                     </h3>
                   </div>
                 </div>
-              </motion.div>);
-
+              </motion.div>
+            );
           })}
         </div>
 
@@ -98,12 +130,16 @@ export function Landing() {
           <button
             onClick={handleContinue}
             disabled={!selectedRole}
-            className={`px-12 py-4 rounded-xl text-lg font-semibold transition-all ${selectedRole ? 'bg-primary text-white hover:bg-primary-dark shadow-lg hover:shadow-xl' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-            
+            className={`px-12 py-4 rounded-xl text-lg font-semibold transition-all ${
+              selectedRole
+                ? 'bg-primary text-white hover:bg-primary-dark shadow-lg hover:shadow-xl'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
             Continue
           </button>
         </div>
       </main>
-    </div>);
-
+    </div>
+  );
 }

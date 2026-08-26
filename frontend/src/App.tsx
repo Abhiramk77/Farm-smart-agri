@@ -3,8 +3,8 @@ import {
   HashRouter as Router,
   Routes,
   Route,
-  Navigate } from
-'react-router-dom';
+  Navigate,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
 // Pages
@@ -18,17 +18,16 @@ import { FarmerMarketplace } from './pages/farmer/Marketplace';
 import { FarmerContractDetail } from './pages/farmer/ContractDetail';
 import { FarmerDashboard } from './pages/farmer/Dashboard';
 import { SellProduct } from './pages/farmer/SellProduct';
-import { Chat } from './pages/Chat';
-import { PaymentStatus } from './pages/PaymentStatus';
-import { AdminDashboard } from './pages/admin/Dashboard';
+import { OrdersDashboard } from './pages/OrdersDashboard';
+
 // Protected Route Wrapper
 function ProtectedRoute({
   children,
-  allowedRole
-
-
-
-}: {children: React.ReactNode;allowedRole?: 'buyer' | 'farmer' | 'admin';}) {
+  allowedRole,
+}: {
+  children: React.ReactNode;
+  allowedRole?: 'buyer' | 'farmer';
+}) {
   const { user } = useAuth();
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -36,13 +35,14 @@ function ProtectedRoute({
   if (allowedRole && user.role !== allowedRole) {
     return (
       <Navigate
-        to={user.role === 'buyer' ? '/buyer/dashboard' : user.role === 'admin' ? '/admin/dashboard' : '/farmer/dashboard'}
-        replace />);
-
-
+        to={user.role === 'buyer' ? '/buyer/dashboard' : '/farmer/dashboard'}
+        replace
+      />
+    );
   }
   return <>{children}</>;
 }
+
 function AppRoutes() {
   return (
     <Routes>
@@ -50,7 +50,6 @@ function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-
 
       {/* Protected Routes - Wrapped in Layout */}
       <Route
@@ -62,7 +61,7 @@ function AppRoutes() {
                 <Route path="dashboard" element={<BuyerDashboard />} />
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="contracts" element={<BuyerDashboard />} />
-                <Route path="payments" element={<PaymentStatus />} />
+                <Route path="orders" element={<OrdersDashboard />} />
               </Routes>
             </Layout>
           </ProtectedRoute>
@@ -79,32 +78,8 @@ function AppRoutes() {
                 <Route path="marketplace" element={<FarmerMarketplace />} />
                 <Route path="contract/:id" element={<FarmerContractDetail />} />
                 <Route path="sell" element={<SellProduct />} />
-                <Route path="payments" element={<PaymentStatus />} />
+                <Route path="orders" element={<OrdersDashboard />} />
               </Routes>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute allowedRole="admin">
-            <Layout>
-              <Routes>
-                <Route path="dashboard" element={<AdminDashboard />} />
-              </Routes>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/chat"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Chat />
             </Layout>
           </ProtectedRoute>
         }
@@ -115,12 +90,13 @@ function AppRoutes() {
     </Routes>
   );
 }
+
 export function App() {
   return (
     <AuthProvider>
       <Router>
         <AppRoutes />
       </Router>
-    </AuthProvider>);
-
+    </AuthProvider>
+  );
 }

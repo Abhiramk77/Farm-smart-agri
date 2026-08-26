@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-rosy-three-35.vercel.app/api';
+const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://backend-rosy-three-35.vercel.app/api';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
