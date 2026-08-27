@@ -1,12 +1,23 @@
 {
   "short_name": "FarmConnect",
-  "name": "FarmConnect Smart Agri Platform",
+  "name": "FarmConnect - Farmer & Buyer Platform",
   "icons": [
     {
-      "src": "farmconnect_logo.png",
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
+    },
+    {
+      "src": "farmer_buyer_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
     },
     {
       "src": "apple-touch-icon.png",
