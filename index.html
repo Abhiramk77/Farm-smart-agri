@@ -13,64 +13,10 @@
     <meta name="apple-mobile-web-app-title" content="FarmConnect" />
     <link rel="manifest" href="manifest.json" />
     <title>FarmConnect - Direct Farmer & Buyer Platform</title>
-    <style>
-      #app-splash {
-        position: fixed;
-        inset: 0;
-        background-color: #064e3b;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: #ffffff;
-      }
-      #app-splash img {
-        width: 140px;
-        height: 140px;
-        border-radius: 28px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        margin-bottom: 20px;
-        -o-object-fit: cover;
-           object-fit: cover;
-        border: 2px solid rgba(255,255,255,0.2);
-      }
-      #app-splash h1 {
-        font-size: 24px;
-        font-weight: 800;
-        margin: 0;
-        letter-spacing: -0.5px;
-      }
-      #app-splash p {
-        font-size: 13px;
-        opacity: 0.8;
-        margin-top: 6px;
-      }
-      .spinner {
-        width: 24px;
-        height: 24px;
-        border: 3px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: #ffffff;
-        animation: spin 0.8s linear infinite;
-        margin-top: 24px;
-      }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    </style>
     <script type="module" crossorigin src="/Farm-smart-agri/assets/index-CaIdGWri.js"></script>
     <link rel="stylesheet" crossorigin href="/Farm-smart-agri/assets/index-CwaZj8WB.css">
   </head>
   <body>
-    <div id="root">
-      <div id="app-splash">
-        <img src="farmer_buyer_logo.png" alt="FarmConnect Farmer & Buyer Logo" />
-        <h1>FarmConnect</h1>
-        <p>Direct Farmer & Buyer Marketplace</p>
-        <div class="spinner"></div>
-      </div>
-    </div>
+    <div id="root"></div>
   </body>
 </html>
