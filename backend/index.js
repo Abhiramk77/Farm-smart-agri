@@ -2,8 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import dns from 'dns';
 import { User, Contract, Chat } from './models.js';
 import { INITIAL_CHATS, INITIAL_CONTRACTS, INITIAL_USERS } from './data.js';
+
+// Ensure DNS SRV resolution works across Windows networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignore fallback if custom DNS setting is unsupported
+}
 
 dotenv.config();
 

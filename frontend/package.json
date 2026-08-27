@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "https://Abhiramk77.github.io/Farm-smart-agri",
   "scripts": {
-    "dev": "npx vite",
+    "dev": "npx vite --host",
     "build": "npx vite build",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "preview": "npx vite preview",

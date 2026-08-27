@@ -16,14 +16,14 @@ import {
   ShieldCheck,
   Wheat,
   Bird,
-  Droplets,
+  Milk,
   Fish
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
   { id: 'poultry', label: 'Poultry Farmer', icon: Bird },
   { id: 'agriculture', label: 'Agriculture Farmer', icon: Wheat },
-  { id: 'dairy', label: 'Dairy Farmer', icon: Droplets },
+  { id: 'dairy', label: 'Dairy Farmer', icon: Milk },
   { id: 'aquaculture', label: 'Aquaculture Farmer', icon: Fish },
 ];
 

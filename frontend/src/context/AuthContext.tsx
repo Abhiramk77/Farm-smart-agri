@@ -58,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('mock_role', response.user.role || 'farmer');
       localStorage.setItem('mock_user_id', response.user.id);
       localStorage.setItem('mock_user_name', response.user.name);
+      if (response.user.email) {
+        localStorage.setItem('mock_user_email', response.user.email);
+      }
       if (response.user.category) {
         localStorage.setItem('mock_category', response.user.category);
       }

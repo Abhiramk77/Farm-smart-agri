@@ -14,9 +14,11 @@ import { Signup } from './pages/Signup';
 
 import { BuyerDashboard } from './pages/buyer/Dashboard';
 import { CreateContract } from './pages/buyer/CreateContract';
+import { FarmerDetailsDashboard } from './pages/buyer/FarmerDetailsDashboard';
 import { FarmerMarketplace } from './pages/farmer/Marketplace';
 import { FarmerContractDetail } from './pages/farmer/ContractDetail';
 import { FarmerDashboard } from './pages/farmer/Dashboard';
+import { BuyerDetailsDashboard } from './pages/farmer/BuyerDetailsDashboard';
 import { SellProduct } from './pages/farmer/SellProduct';
 import { OrdersDashboard } from './pages/OrdersDashboard';
 import { PaymentsDashboard } from './pages/PaymentsDashboard';
@@ -60,6 +62,7 @@ function AppRoutes() {
             <Layout>
               <Routes>
                 <Route path="dashboard" element={<BuyerDashboard />} />
+                <Route path="farmers" element={<FarmerDetailsDashboard />} />
                 <Route path="create-contract" element={<CreateContract />} />
                 <Route path="contracts" element={<BuyerDashboard />} />
                 <Route path="orders" element={<OrdersDashboard />} />
@@ -77,6 +80,7 @@ function AppRoutes() {
             <Layout>
               <Routes>
                 <Route path="dashboard" element={<FarmerDashboard />} />
+                <Route path="buyers" element={<BuyerDetailsDashboard />} />
                 <Route path="marketplace" element={<FarmerMarketplace />} />
                 <Route path="contract/:id" element={<FarmerContractDetail />} />
                 <Route path="sell" element={<SellProduct />} />

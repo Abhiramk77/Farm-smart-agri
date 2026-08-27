@@ -7,7 +7,9 @@ import {
   updateProfile,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, where, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { MOCK_CONTRACTS } from '../data/mockData';
+
 
 export interface User {
   id: string;
@@ -283,29 +285,62 @@ export const authService = {
   },
 };
 
+async function seedFirestoreIfEmpty() {
+  // Auto-seeding disabled to ensure only user-created data is displayed
+}
+
 export const contractService = {
-  getContracts: async (status?: string) => {
-    const query = status ? `?status=${status}` : '';
-    const res = await apiClient.get<Contract[]>(`/contracts${query}`);
-    return (res || []).map(sanitizeContract);
+  getContracts: async (status?: string): Promise<Contract[]> => {
+    try {
+      const ordersRef = collection(db, 'orders');
+      let q = query(ordersRef);
+      if (status) {
+        q = query(ordersRef, where('status', '==', status));
+      }
+      const snapshot = await getDocs(q);
+      const firestoreContracts: Contract[] = [];
+      snapshot.forEach((docSnap) => {
+        firestoreContracts.push(sanitizeContract(docSnap.data() as Contract));
+      });
+      return firestoreContracts;
+    } catch (e) {
+      console.warn('Firestore getDocs failed:', e);
+      return [];
+    }
   },
-  getMarketplace: async () => {
-    const res = await apiClient.get<Contract[]>('/contracts/marketplace');
-    return (res || []).map(sanitizeContract);
+
+  getMarketplace: async (): Promise<Contract[]> => {
+    try {
+      const ordersRef = collection(db, 'orders');
+      const q = query(ordersRef, where('status', '==', 'pending'));
+      const snapshot = await getDocs(q);
+      const list: Contract[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push(sanitizeContract(docSnap.data() as Contract));
+      });
+      return list;
+    } catch (e) {
+      console.warn('Firestore getMarketplace failed:', e);
+      return [];
+    }
   },
-  getContractById: async (id: string) => {
+
+  getContractById: async (id: string): Promise<Contract> => {
+    try {
+      const docRef = doc(db, 'orders', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return sanitizeContract(docSnap.data() as Contract);
+      }
+    } catch (e) {
+      console.warn('Firestore getDoc failed for order ID:', id, e);
+    }
+
     const userId = localStorage.getItem('mock_user_id') || 'unknown';
     const acceptedIds: string[] = JSON.parse(localStorage.getItem(`accepted_contracts_${userId}`) || '[]');
     const cachedContracts: any[] = JSON.parse(localStorage.getItem(`cached_contracts_${userId}`) || '[]');
 
     let contract: Contract | null = null;
-
-    try {
-      const res = await apiClient.get<Contract>(`/contracts/${id}`);
-      if (res && res.id) contract = sanitizeContract(res);
-    } catch (e) {
-      console.warn('Backend API getContractById failed, attempting local storage lookup', e);
-    }
 
     if (!contract) {
       const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]');
@@ -314,34 +349,8 @@ export const contractService = {
     }
 
     if (!contract) {
-      const buyerContracts = JSON.parse(localStorage.getItem(`buyer_contracts_${userId}`) || '[]');
-      const matchBuyer = buyerContracts.find((c: any) => c && c.id === id);
-      if (matchBuyer) contract = sanitizeContract(matchBuyer);
-    }
-
-    if (!contract) {
       const matchCached = cachedContracts.find((c: any) => c && c.id === id);
       if (matchCached) contract = sanitizeContract(matchCached);
-    }
-
-    if (!contract) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('buyer_contracts_') || key.startsWith('cached_contracts_') || key.startsWith('accepted_contracts_'))) {
-          try {
-            const list = JSON.parse(localStorage.getItem(key) || '[]');
-            if (Array.isArray(list)) {
-              const found = list.find((c: any) => c && c.id === id);
-              if (found) {
-                contract = sanitizeContract(found);
-                break;
-              }
-            }
-          } catch (e) {
-            // ignore
-          }
-        }
-      }
     }
 
     if (!contract) {
@@ -361,149 +370,136 @@ export const contractService = {
 
     return contract;
   },
-  createContract: async (contractData: Partial<Contract>) => {
-    const res = await apiClient.post<Contract>('/contracts', contractData);
-    return sanitizeContract(res);
-  },
-  acceptContract: async (id: string) => {
-    const userId = localStorage.getItem('mock_user_id') || 'unknown';
 
-    // Add ID to accepted_contracts_${userId}
-    const idsKey = `accepted_contracts_${userId}`;
-    const existingIds: string[] = JSON.parse(localStorage.getItem(idsKey) || '[]');
-    if (!existingIds.includes(id)) {
-      localStorage.setItem(idsKey, JSON.stringify([...existingIds, id]));
+  createContract: async (contractData: Partial<Contract>): Promise<Contract> => {
+    const contractId = contractData.id || `c_${Date.now()}`;
+    const cleanContract = sanitizeContract({
+      id: contractId,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      ...contractData,
+    } as Contract);
+
+    // 1. Write to Firestore 'orders' collection
+    try {
+      await setDoc(doc(db, 'orders', contractId), cleanContract);
+      console.log('Order created in Firestore orders collection:', contractId);
+    } catch (e) {
+      console.warn('Firestore setDoc failed for order creation:', e);
+    }
+
+    // 2. Best effort API call
+    try {
+      await apiClient.post<Contract>('/contracts', cleanContract);
+    } catch (e) {}
+
+    return cleanContract;
+  },
+
+  acceptContract: async (id: string, farmerId?: string, farmerName?: string): Promise<Contract> => {
+    const userId = farmerId || localStorage.getItem('mock_user_id') || 'unknown';
+    const userName = farmerName || localStorage.getItem('mock_user_name') || 'Farmer';
+
+    const updateData = {
+      status: 'active' as const,
+      progress: 'planting' as const,
+      farmerId: userId,
+      farmerName: userName,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // 1. Update in Firestore
+    try {
+      const docRef = doc(db, 'orders', id);
+      await setDoc(docRef, updateData, { merge: true });
+      console.log('Firestore order accepted:', id);
+    } catch (e) {
+      console.warn('Firestore acceptContract failed:', e);
     }
 
     try {
-      const res = await apiClient.post<Contract>(`/contracts/${id}/accept`, {});
-      if (res) {
-        const activeRes = { ...res, status: 'active' as const, progress: 'planting' as const };
-        const cacheKey = `cached_contracts_${userId}`;
-        const cached: any[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
-        if (!cached.some((c) => c.id === id)) {
-          localStorage.setItem(cacheKey, JSON.stringify([...cached, activeRes]));
-        }
-        return sanitizeContract(activeRes);
-      }
-    } catch (e) {
-      console.warn('Backend acceptContract failed, using local status update', e);
-    }
+      await apiClient.post<Contract>(`/contracts/${id}/accept`, {});
+    } catch (e) {}
 
-    const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]');
-    const target = customPending.find((c: any) => c.id === id);
-    const updatedPending = customPending.filter((c: any) => c.id !== id);
-    localStorage.setItem('custom_pending_contracts', JSON.stringify(updatedPending));
-
-    const activeContract = sanitizeContract({
-      ...(target || {}),
-      id,
-      status: 'active',
-      progress: 'planting',
-    } as any);
-
-    const cacheKey = `cached_contracts_${userId}`;
-    const cached: any[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    if (!cached.some((c) => c.id === id)) {
-      localStorage.setItem(cacheKey, JSON.stringify([...cached, activeContract]));
-    }
-
-    return activeContract;
-  },
-  rejectContract: async (id: string) => {
-    try {
-      const res = await apiClient.post<Contract>(`/contracts/${id}/reject`, {});
-      if (res) return sanitizeContract(res);
-    } catch (e) {
-      console.warn('Backend rejectContract failed, using local status update', e);
-    }
-
-    const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]');
-    const updatedPending = customPending.filter((c: any) => c.id !== id);
-    localStorage.setItem('custom_pending_contracts', JSON.stringify(updatedPending));
-
+    const existing = await contractService.getContractById(id).catch(() => null);
     return sanitizeContract({
+      ...(existing || {}),
       id,
-      status: 'rejected',
-    } as any);
+      ...updateData,
+    } as Contract);
   },
-  updateProgress: async (id: string, progress: string) => {
-    let updatedContract: Contract | null = null;
+
+  rejectContract: async (id: string): Promise<Contract> => {
+    const updateData = {
+      status: 'rejected' as const,
+      updatedAt: new Date().toISOString(),
+    };
+
     try {
-      const res = await apiClient.put<Contract>(`/contracts/${id}/progress`, {
-        progress,
-      });
-      if (res && res.id) updatedContract = sanitizeContract(res);
+      const docRef = doc(db, 'orders', id);
+      await setDoc(docRef, updateData, { merge: true });
+      console.log('Firestore order rejected:', id);
     } catch (e) {
-      console.warn('Backend updateProgress failed, updating local storage state', e);
+      console.warn('Firestore rejectContract failed:', e);
     }
 
-    const userId = localStorage.getItem('mock_user_id') || 'unknown';
-    const cacheKey = `cached_contracts_${userId}`;
-    const cached: Contract[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    const foundIndex = cached.findIndex((c) => c && c.id === id);
-    if (foundIndex !== -1) {
-      cached[foundIndex] = {
-        ...cached[foundIndex],
-        progress: progress as any,
-        status: progress === 'delivered' ? 'completed' : cached[foundIndex].status || 'active',
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cached));
-      if (!updatedContract) updatedContract = sanitizeContract(cached[foundIndex]);
-    }
+    try {
+      await apiClient.post<Contract>(`/contracts/${id}/reject`, {});
+    } catch (e) {}
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('buyer_contracts_') || key.startsWith('cached_contracts_') || key.startsWith('accepted_contracts_'))) {
-        try {
-          const list = JSON.parse(localStorage.getItem(key) || '[]');
-          if (Array.isArray(list)) {
-            let modified = false;
-            const updatedList = list.map((c: any) => {
-              if (c && c.id === id) {
-                modified = true;
-                const newC = {
-                  ...c,
-                  progress,
-                  status: progress === 'delivered' ? 'completed' : c.status || 'active',
-                };
-                if (!updatedContract) updatedContract = sanitizeContract(newC);
-                return newC;
-              }
-              return c;
-            });
-            if (modified) {
-              localStorage.setItem(key, JSON.stringify(updatedList));
-            }
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-    }
-
-    if (!updatedContract) {
-      updatedContract = sanitizeContract({
-        id,
-        progress: progress as any,
-        status: progress === 'delivered' ? 'completed' : 'active',
-      } as any);
-    }
-
-    return updatedContract;
+    const existing = await contractService.getContractById(id).catch(() => null);
+    return sanitizeContract({
+      ...(existing || {}),
+      id,
+      ...updateData,
+    } as Contract);
   },
+
+  updateProgress: async (id: string, progress: string): Promise<Contract> => {
+    const status = progress === 'delivered' ? ('completed' as const) : ('active' as const);
+    const updateData = {
+      progress: progress as any,
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      const docRef = doc(db, 'orders', id);
+      await setDoc(docRef, updateData, { merge: true });
+      console.log('Firestore order progress updated:', id, progress);
+    } catch (e) {
+      console.warn('Firestore updateProgress failed:', e);
+    }
+
+    try {
+      await apiClient.put<Contract>(`/contracts/${id}/progress`, { progress });
+    } catch (e) {}
+
+    const existing = await contractService.getContractById(id).catch(() => null);
+    return sanitizeContract({
+      ...(existing || {}),
+      id,
+      ...updateData,
+    } as Contract);
+  },
+
   updateContractProgress: async (id: string, progress: string) => {
     return contractService.updateProgress(id, progress);
   },
-  deleteContract: async (id: string) => {
+
+  deleteContract: async (id: string): Promise<void> => {
     try {
-      // Best effort backend delete
-      await apiClient.delete(`/contracts/${id}`);
+      await deleteDoc(doc(db, 'orders', id));
+      console.log('Order deleted from Firestore orders collection:', id);
     } catch (e) {
-      console.warn('Backend API deleteContract failed, falling back to local storage deletion', e);
+      console.warn('Firestore deleteContract failed:', e);
     }
 
-    // Remove from all local storage lists
+    try {
+      await apiClient.delete(`/contracts/${id}`);
+    } catch (e) {}
+
+    // Cleanup local storage lists
     const keysToCheck = ['custom_pending_contracts', 'farmer_listings'];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -512,7 +508,7 @@ export const contractService = {
       }
     }
 
-    keysToCheck.forEach(key => {
+    keysToCheck.forEach((key) => {
       try {
         const itemStr = localStorage.getItem(key);
         if (itemStr) {
@@ -521,11 +517,9 @@ export const contractService = {
             const originalLength = list.length;
             let updatedList;
             if (key.startsWith('accepted_contracts_')) {
-              // It's an array of string IDs
-              updatedList = list.filter(item => item !== id);
+              updatedList = list.filter((item) => item !== id);
             } else {
-              // It's an array of objects
-              updatedList = list.filter(c => c && c.id !== id);
+              updatedList = list.filter((c) => c && c.id !== id);
             }
             if (updatedList.length !== originalLength) {
               localStorage.setItem(key, JSON.stringify(updatedList));
@@ -537,5 +531,88 @@ export const contractService = {
       }
     });
   },
+
+  subscribeUserOrders: (onUpdate: (orders: Contract[]) => void) => {
+    try {
+      const ordersRef = collection(db, 'orders');
+      return onSnapshot(
+        ordersRef,
+        (snapshot) => {
+          const firestoreContracts: Contract[] = [];
+          snapshot.forEach((docSnap) => {
+            firestoreContracts.push(sanitizeContract(docSnap.data() as Contract));
+          });
+          onUpdate(firestoreContracts);
+        },
+        (error) => {
+          console.warn('Firestore onSnapshot listener notice:', error);
+        }
+      );
+    } catch (e) {
+      console.warn('Firestore subscription unavailable:', e);
+      return () => {};
+    }
+  },
+
+  sendMessage: async (msgData: {
+    senderId: string;
+    senderName: string;
+    receiverId: string;
+    receiverName: string;
+    text: string;
+    contractId?: string;
+  }) => {
+    const msgId = `msg_${Date.now()}`;
+    const payload = {
+      id: msgId,
+      ...msgData,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const msgRef = doc(db, 'messages', msgId);
+      await setDoc(msgRef, payload);
+      console.log('Message sent via Firestore:', msgId);
+    } catch (e) {
+      console.warn('Firestore sendMessage failed, saving locally:', e);
+    }
+
+    // Save locally for reliable offline sync
+    const localKey = `messages_${msgData.receiverId}`;
+    const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+    localStorage.setItem(localKey, JSON.stringify([payload, ...existing]));
+
+    const senderKey = `messages_${msgData.senderId}`;
+    const senderExisting = JSON.parse(localStorage.getItem(senderKey) || '[]');
+    localStorage.setItem(senderKey, JSON.stringify([payload, ...senderExisting]));
+
+    return payload;
+  },
+
+  subscribeMessages: (userId: string, onUpdate: (messages: any[]) => void) => {
+    try {
+      const msgsRef = collection(db, 'messages');
+      return onSnapshot(
+        msgsRef,
+        (snapshot) => {
+          const userMsgs: any[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.senderId === userId || data.receiverId === userId || data.receiverName === userId) {
+              userMsgs.push(data);
+            }
+          });
+          onUpdate(userMsgs);
+        },
+        (error) => {
+          console.warn('Firestore message listener notice:', error);
+        }
+      );
+    } catch (e) {
+      console.warn('Firestore message subscription unavailable:', e);
+      return () => {};
+    }
+  },
 };
+
 

@@ -40,10 +40,7 @@ export function PaymentsDashboard() {
   const [selectedReceipt, setSelectedReceipt] = useState<CodPayment | null>(null);
 
   useEffect(() => {
-    const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
-    const userRole = user?.role || localStorage.getItem('mock_role') || 'buyer';
-    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
-    const farmerCategory = user?.category || localStorage.getItem('mock_category') || 'agriculture';
+    let unsubscribe: (() => void) | null = null;
 
     const processContractsToCod = (contractsList: Contract[]) => {
       return contractsList.map((c, index) => {
@@ -68,81 +65,63 @@ export function PaymentsDashboard() {
       });
     };
 
-    if (userRole === 'buyer') {
-      // BUYER ACCOUNT SCOPING
-      const localKey = `buyer_contracts_${userId}`;
-      const storedLocal = localStorage.getItem(localKey);
+    const userId = user?.id || localStorage.getItem('mock_user_id') || '';
+    const userName = user?.name || localStorage.getItem('mock_user_name') || '';
+    const userRole = user?.role || localStorage.getItem('mock_role') || 'farmer';
+    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
 
-      if (storedLocal !== null) {
-        try {
-          const parsed: Contract[] = JSON.parse(storedLocal).map(sanitizeContract);
-          setPayments(processContractsToCod(parsed));
-          setIsLoading(false);
-          return;
-        } catch {
-          // fallback
-        }
-      }
+    const loadPayments = (data: Contract[]) => {
+      const acceptedOnly = (data || [])
+        .map(sanitizeContract)
+        .filter((c) => {
+          const isAccepted = c.status === 'active' || c.status === 'completed';
+          if (!isAccepted) return false;
 
-      if (userEmail === 'buyer@farming.com' || userId === 'u3') {
-        contractService
-          .getContracts()
-          .then((data) => {
-            const sanitized = (data || []).map(sanitizeContract);
-            localStorage.setItem(localKey, JSON.stringify(sanitized));
-            setPayments(processContractsToCod(sanitized));
-          })
-          .catch(() => {
-            localStorage.setItem(localKey, JSON.stringify([]));
-            setPayments([]);
-          })
-          .finally(() => setIsLoading(false));
-      } else {
-        // New buyer account has zero contracts
-        localStorage.setItem(localKey, JSON.stringify([]));
+          if (userRole === 'buyer') {
+            return (
+              (c.buyerId && (c.buyerId === userId || c.buyerId === userEmail)) ||
+              (c.buyerName && c.buyerName.toLowerCase() === userName.toLowerCase())
+            );
+          }
+
+          // Farmer Role
+          const acceptedIdsKey = `accepted_contracts_${userId}`;
+          const myAcceptedIds: string[] = JSON.parse(
+            localStorage.getItem(acceptedIdsKey) || '[]'
+          );
+
+          const matchesFarmerId = c.farmerId && (c.farmerId === userId || c.farmerId === userEmail);
+          const matchesFarmerName = c.farmerName && c.farmerName.toLowerCase() === userName.toLowerCase();
+          const isLocallyAccepted = myAcceptedIds.includes(c.id);
+
+          if (c.farmerId || c.farmerName) {
+            return matchesFarmerId || matchesFarmerName || isLocallyAccepted;
+          }
+          return isLocallyAccepted;
+        });
+
+      setPayments(processContractsToCod(acceptedOnly));
+      setIsLoading(false);
+    };
+
+    // 1. Load initial Firestore contracts
+    contractService
+      .getContracts()
+      .then((data) => loadPayments(data))
+      .catch((err) => {
+        console.error('Failed to load Payments from Firestore:', err);
         setPayments([]);
-        setIsLoading(false);
-      }
-    } else {
-      // FARMER ACCOUNT SCOPING
-      const acceptedIdsKey = `accepted_contracts_${userId}`;
-      const cachedKey = `cached_contracts_${userId}`;
+      })
+      .finally(() => setIsLoading(false));
 
-      const myAcceptedIds: string[] = JSON.parse(
-        localStorage.getItem(acceptedIdsKey) || '[]'
-      );
-      const rawCached = JSON.parse(
-        localStorage.getItem(cachedKey) || '[]'
-      );
-      const cachedContracts: Contract[] = (rawCached || []).map(sanitizeContract);
+    // 2. Real-time subscription for instant Android & Web sync
+    unsubscribe = contractService.subscribeUserOrders((updatedOrders) => {
+      loadPayments(updatedOrders);
+    });
 
-      contractService
-        .getContracts()
-        .then((data) => {
-          const sanitizedData = (data || []).map(sanitizeContract);
-          const contractsMap = new Map<string, Contract>();
-
-          sanitizedData.forEach((c) => {
-            if (myAcceptedIds.includes(c.id) || c.farmerId === userId) {
-              contractsMap.set(c.id, c);
-            } else if (myAcceptedIds.length === 0 && c.category === farmerCategory) {
-              // Sample farmer fallback for initial demonstration
-              contractsMap.set(c.id, c);
-            }
-          });
-
-          cachedContracts.forEach((c) => {
-            contractsMap.set(c.id, c);
-          });
-
-          const accountContracts = Array.from(contractsMap.values());
-          setPayments(processContractsToCod(accountContracts));
-        })
-        .catch(() => {
-          setPayments(processContractsToCod(cachedContracts));
-        })
-        .finally(() => setIsLoading(false));
-    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [user]);
 
   // Derived metrics

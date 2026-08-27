@@ -4,15 +4,15 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Firebase configuration for smart-agri-1112a
+// Firebase configuration for farm-connect-d3d13
 const firebaseConfig = {
-  apiKey: "AIzaSyAwSRwfvUuKysA33YkuIFIckN0HiR2g_4k",
-  authDomain: "smart-agri-1112a.firebaseapp.com",
-  projectId: "smart-agri-1112a",
-  storageBucket: "smart-agri-1112a.firebasestorage.app",
-  messagingSenderId: "64549952068",
-  appId: "1:64549952068:web:e3d3db330ccdb098167a11",
-  measurementId: "G-N8RNGENPY1"
+  apiKey: "AIzaSyAwUQZKRiJ-WalR4BdMSB-_dloGHnv9XMc",
+  authDomain: "farm-connect-d3d13.firebaseapp.com",
+  projectId: "farm-connect-d3d13",
+  storageBucket: "farm-connect-d3d13.firebasestorage.app",
+  messagingSenderId: "1024913563475",
+  appId: "1:1024913563475:web:8afb579b52e357f9170ba6",
+  measurementId: "G-W4ZQVLQXYS"
 };
 
 // Initialize Firebase App (prevents re-initialization error during hot reloads)

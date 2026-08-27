@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Star, Loader2, Wheat, Droplets, Fish, Bird } from 'lucide-react';
+import { MapPin, Clock, Star, Loader2, Wheat, Milk, Fish, Bird } from 'lucide-react';
 import { contractService, Contract, sanitizeContract } from '../../api/services';
 
 const CATEGORY_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   agriculture: { label: 'Agriculture', color: 'bg-green-100 text-green-800',  icon: <Wheat size={14} /> },
-  dairy:       { label: 'Dairy',       color: 'bg-blue-100 text-blue-800',    icon: <Droplets size={14} /> },
+  dairy:       { label: 'Dairy',       color: 'bg-blue-100 text-blue-800',    icon: <Milk size={14} /> },
   aquaculture: { label: 'Aquaculture', color: 'bg-cyan-100 text-cyan-800',    icon: <Fish size={14} /> },
   poultry:     { label: 'Poultry',     color: 'bg-amber-100 text-amber-800',  icon: <Bird size={14} /> },
 };
@@ -21,34 +21,49 @@ export function FarmerMarketplace() {
   const categoryMeta = CATEGORY_META[farmerCategory];
 
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
+    const loadMarketplace = (firestoreData: Contract[]) => {
+      const sanitized = (firestoreData || []).map(sanitizeContract);
+      const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]').map(sanitizeContract);
+
+      const seenKeys = new Set<string>();
+      const combined: Contract[] = [];
+
+      [...customPending, ...sanitized].forEach(c => {
+        if (c.status !== 'pending') return; // Only show pending marketplace contracts
+        const sig = `${c.category}_${(c.product || '').toLowerCase()}_${c.quantity}_${c.price}`;
+        if (!seenKeys.has(c.id) && !seenKeys.has(sig)) {
+          seenKeys.add(c.id);
+          seenKeys.add(sig);
+          combined.push(c);
+        }
+      });
+
+      const filtered = farmerCategory
+        ? combined.filter(c => c.category === farmerCategory)
+        : combined;
+      setContracts(filtered);
+      setIsLoading(false);
+    };
+
     contractService.getMarketplace()
-      .then(data => {
-        const sanitized = (data || []).map(sanitizeContract);
-        const customPending = JSON.parse(localStorage.getItem('custom_pending_contracts') || '[]').map(sanitizeContract);
-
-        const seenKeys = new Set<string>();
-        const combined: Contract[] = [];
-
-        [...customPending, ...sanitized].forEach(c => {
-          const sig = `${c.category}_${(c.product || '').toLowerCase()}_${c.quantity}_${c.price}`;
-          if (!seenKeys.has(c.id) && !seenKeys.has(sig)) {
-            seenKeys.add(c.id);
-            seenKeys.add(sig);
-            combined.push(c);
-          }
-        });
-
-        const filtered = farmerCategory
-          ? combined.filter(c => c.category === farmerCategory)
-          : combined;
-        setContracts(filtered);
-      })
+      .then(data => loadMarketplace(data))
       .catch(err => {
         console.error('Failed to fetch marketplace contracts', err);
         setError('Could not load the marketplace. Please try again later.');
         setContracts([]);
       })
       .finally(() => setIsLoading(false));
+
+    // Live subscription: automatically sync mobile & web app orders in real-time
+    unsubscribe = contractService.subscribeUserOrders((updatedOrders) => {
+      loadMarketplace(updatedOrders);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [farmerCategory]);
 
   if (isLoading) {

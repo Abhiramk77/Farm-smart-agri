@@ -20,38 +20,41 @@ export function BuyerDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
-    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
-    const localKey = `buyer_contracts_${userId}`;
-    const storedLocal = localStorage.getItem(localKey);
+    let unsubscribe: (() => void) | null = null;
 
-    if (storedLocal !== null) {
-      // User has an initialized contract list for their account
-      const parsed: Contract[] = JSON.parse(storedLocal).map(sanitizeContract);
-      setContracts(parsed);
+    const userId = user?.id || localStorage.getItem('mock_user_id') || '';
+    const userName = user?.name || localStorage.getItem('mock_user_name') || '';
+    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
+
+    const loadBuyerContracts = (firestoreData: Contract[]) => {
+      const sanitized = (firestoreData || []).map(sanitizeContract);
+      const myContracts = sanitized.filter((c) => {
+        return (
+          (c.buyerId && (c.buyerId === userId || c.buyerId === userEmail)) ||
+          (c.buyerName && c.buyerName.toLowerCase() === userName.toLowerCase())
+        );
+      });
+      setContracts(myContracts);
       setIsLoading(false);
-    } else {
-      // First time viewing dashboard for this buyer account
-      if (userEmail === 'buyer@farming.com' || userId === 'u3') {
-        contractService
-          .getContracts()
-          .then((data) => {
-            const sanitized = (data || []).map(sanitizeContract);
-            localStorage.setItem(localKey, JSON.stringify(sanitized));
-            setContracts(sanitized);
-          })
-          .catch(() => {
-            localStorage.setItem(localKey, JSON.stringify([]));
-            setContracts([]);
-          })
-          .finally(() => setIsLoading(false));
-      } else {
-        // NEW BUYER -> Initialize with ZERO contracts (Nill & Zero Spent)
-        localStorage.setItem(localKey, JSON.stringify([]));
+    };
+
+    contractService
+      .getContracts()
+      .then((data) => loadBuyerContracts(data))
+      .catch((err) => {
+        console.error('Failed to fetch buyer contracts from Firestore:', err);
         setContracts([]);
-        setIsLoading(false);
-      }
-    }
+      })
+      .finally(() => setIsLoading(false));
+
+    // Live subscription for Android & Web sync
+    unsubscribe = contractService.subscribeUserOrders((updatedOrders) => {
+      loadBuyerContracts(updatedOrders);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [user]);
 
   const handleDelete = async (id: string) => {

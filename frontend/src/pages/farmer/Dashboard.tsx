@@ -26,48 +26,46 @@ export function FarmerDashboard() {
   const categoryLabel = CATEGORY_NAMES[farmerCategory] || (farmerCategory ? farmerCategory.charAt(0).toUpperCase() + farmerCategory.slice(1) : 'Farmer');
 
   useEffect(() => {
-    const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
-    const myAcceptedIds: string[] = JSON.parse(
-      localStorage.getItem(`accepted_contracts_${userId}`) || '[]'
-    );
-    const rawCached = JSON.parse(
-      localStorage.getItem(`cached_contracts_${userId}`) || '[]'
-    );
-    const cachedContracts: Contract[] = (rawCached || []).map(sanitizeContract);
+    let unsubscribe: (() => void) | null = null;
+
+    const userId = user?.id || localStorage.getItem('mock_user_id') || '';
+    const userName = user?.name || localStorage.getItem('mock_user_name') || '';
+    const userEmail = user?.email || localStorage.getItem('mock_user_email') || '';
+
+    const loadFarmerContracts = (data: Contract[]) => {
+      const sanitizedData = (data || []).map(sanitizeContract);
+      const acceptedIdsKey = `accepted_contracts_${userId}`;
+      const myAcceptedIds: string[] = JSON.parse(
+        localStorage.getItem(acceptedIdsKey) || '[]'
+      );
+
+      const activeOnly = sanitizedData.filter((c) => {
+        const isAccepted = c.status === 'active' || c.status === 'completed';
+        if (!isAccepted) return false;
+
+        const matchesFarmerId = c.farmerId && (c.farmerId === userId || c.farmerId === userEmail);
+        const matchesFarmerName = c.farmerName && c.farmerName.toLowerCase() === userName.toLowerCase();
+        const isLocallyAccepted = myAcceptedIds.includes(c.id);
+
+        if (c.farmerId || c.farmerName) {
+          return matchesFarmerId || matchesFarmerName || isLocallyAccepted;
+        }
+        return isLocallyAccepted;
+      });
+
+      setActiveContracts(activeOnly);
+      setIsLoading(false);
+    };
 
     contractService
-      .getContracts('active')
-      .then((data) => {
-        const sanitizedData = (data || []).map(sanitizeContract);
-
-        const contractsMap = new Map<string, Contract>();
-
-        // Add API contracts matching farmer's category or accepted IDs
-        sanitizedData.forEach((c) => {
-          if (c.category === farmerCategory || myAcceptedIds.includes(c.id)) {
-            contractsMap.set(c.id, c);
-          }
-        });
-
-        // Overlay cached contracts (which hold updated stage/progress from farmer)
-        cachedContracts.forEach((c) => {
-          contractsMap.set(c.id, c);
-        });
-
-        const merged = Array.from(contractsMap.values());
-        setActiveContracts(merged);
-        localStorage.setItem(`cached_contracts_${userId}`, JSON.stringify(merged));
-      })
+      .getContracts()
+      .then((data) => loadFarmerContracts(data))
       .catch((err) => {
         console.error('Failed to fetch contracts', err);
-        if (cachedContracts.length > 0) {
-          setActiveContracts(cachedContracts);
-        } else {
-          setError('Could not load contracts. Please try again later.');
-          setActiveContracts([]);
-        }
+        setActiveContracts([]);
       })
       .finally(() => {
+        const userId = user?.id || localStorage.getItem('mock_user_id') || 'unknown';
         const localListings = JSON.parse(
           localStorage.getItem(`farmer_listings_${userId}`) ||
           localStorage.getItem('farmer_listings') ||
@@ -80,6 +78,15 @@ export function FarmerDashboard() {
         setMyListings(sanitizedListings);
         setIsLoading(false);
       });
+
+    // Real-time subscription for live Android & Web sync
+    unsubscribe = contractService.subscribeUserOrders((updatedOrders) => {
+      loadFarmerContracts(updatedOrders);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [user, farmerCategory]);
 
   if (isLoading) {

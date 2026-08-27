@@ -19,6 +19,9 @@ import {
   ShieldCheck,
   ClipboardList,
   Banknote,
+  Users,
+  Building2,
+  UserCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -58,6 +61,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       icon: Home,
       label: 'Dashboard',
       path: `${basePath}/dashboard`,
+    },
+    {
+      icon: isBuyer ? Users : Building2,
+      label: isBuyer ? 'Farmer Info' : 'Buyer Info',
+      path: isBuyer ? `${basePath}/farmers` : `${basePath}/buyers`,
     },
     {
       icon: FileText,
@@ -120,11 +128,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-            <Leaf size={20} />
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center border border-primary/20 shadow-xs">
+            <img src="farmer_buyer_logo.png" alt="FarmConnect Logo" className="w-full h-full object-cover" />
           </div>
           <span className="font-bold text-lg text-primary-dark hidden sm:block">
-            Smart Agri
+            FarmConnect
           </span>
         </div>
 
@@ -195,11 +203,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-xl transition-colors"
             title="Click to view saved account profile info"
           >
-            <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden border border-primary/20">
-              <img
-                src={`https://ui-avatars.com/api/?name=${user.name}&background=2D6A4F&color=fff`}
-                alt="Avatar"
-              />
+            <div
+              className={`w-9 h-9 ${
+                isBuyer
+                  ? 'bg-blue-600 text-white border-blue-700'
+                  : 'bg-emerald-600 text-white border-emerald-700'
+              } rounded-full flex items-center justify-center font-bold shadow-xs border`}
+            >
+              {isBuyer ? <Building2 size={18} /> : <UserCheck size={18} />}
             </div>
             <span className="text-sm font-medium hidden md:block text-gray-800">
               {user.name}
@@ -297,8 +308,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </button>
 
             <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
-              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-2xl font-bold border border-primary/20">
-                {user.name ? user.name.slice(0, 2).toUpperCase() : 'US'}
+              <div
+                className={`w-16 h-16 ${
+                  isBuyer
+                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                } rounded-2xl flex items-center justify-center font-bold border shadow-xs`}
+              >
+                {isBuyer ? <Building2 size={30} /> : <UserCheck size={30} />}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900">{user.name}</h3>
