@@ -1,11 +1,17 @@
 {
-  "short_name": "SmartAgri",
-  "name": "Smart Agri Contract Platform",
+  "short_name": "FarmConnect",
+  "name": "FarmConnect Smart Agri Platform",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/608/608933.png",
+      "src": "farmconnect_logo.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
     }
   ],
   "start_url": "/Farm-smart-agri/",
